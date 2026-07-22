@@ -9,8 +9,8 @@
 // GPS Debug Configuration
 //----------------------------------------------------
 #define GPS_DEBUG_VERBOSE 1       // Enable verbose GPS logging
-#define GPS_DEBUG_NMEA 0          // Enable raw NMEA sentence logging (verbose)
-#define GPS_DEBUG_STATS_INTERVAL 30000  // Stats logging interval (ms)
+#define GPS_DEBUG_NMEA 1          // Enable raw NMEA sentence logging (verbose)
+#define GPS_DEBUG_STATS_INTERVAL 15000  // Stats logging interval (ms)
 
 //----------------------------------------------------
 // Public Functions

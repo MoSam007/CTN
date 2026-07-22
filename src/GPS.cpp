@@ -24,9 +24,10 @@ void initialiseGPS()
 
     Serial.println();
     Serial.println("Initialising GPS (NEO-6M)...");
-    Serial.print("RX Pin: "); Serial.println(GPS_RX_PIN);
-    Serial.print("TX Pin: "); Serial.println(GPS_TX_PIN);
-    Serial.print("Baudrate: "); Serial.println(GPS_BAUDRATE);
+    Serial.println("RX Pin (ESP<-GPS): D7 (GPIO 13)");
+    Serial.println("TX Pin (ESP->GPS): D6 (GPIO 12)");
+    Serial.print("Baudrate: ");
+    Serial.println(GPS_BAUDRATE);
     Serial.println("Waiting for satellite fix...");
 
     // Quick hardware check
@@ -43,6 +44,15 @@ void updateGPS()
     {
         char c = gpsSerial.read();
         gpsCharsProcessed++;
+
+#if GPS_DEBUG_NMEA
+        if (c == '$')
+        {
+            // Start of new sentence - print it when we get newline
+            Serial.print("\n[NMEA] ");
+        }
+        Serial.print(c);
+#endif
 
         if (gps.encode(c))
         {
@@ -61,14 +71,6 @@ void updateGPS()
                 gpsFailedChecksum = gps.failedChecksum();
             }
         }
-
-#if GPS_DEBUG_NMEA
-        if (c == '\n')
-        {
-            // We'd need to buffer the sentence to print it
-            // This is a simplified version - just log the char
-        }
-#endif
     }
 
     // Periodic stats logging

@@ -17,17 +17,13 @@
 #define GPS_RX_PIN D7      // ESP8266 RX <- GPS TX
 #define GPS_TX_PIN D6     // ESP8266 TX -> GPS RX
 
-// Panic Button
-#define PANIC_BUTTON_PIN D5
-
-// Optional battery monitor
-#define BATTERY_PIN A0
+// GPS Baud rate - change if your module uses different rate
+// Common: 9600 (default), 4800, 38400, 57600, 115200
+#define GPS_BAUDRATE 9600
 
 /*************************************************
  * GPS
  *************************************************/
-
-#define GPS_BAUDRATE 9600
 
 /*************************************************
  * WiFi - REMOVED HARDCODED CREDENTIALS
