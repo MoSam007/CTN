@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="CTN - Child Tracking Necklace AP Dashboard">
+    <meta name="theme-color" content="#1E88E5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="white">
+    <meta name="apple-mobile-web-app-title" content="CTN Setup">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/assets/logo.svg">
+    <title>CTN Setup</title>
+    <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="header-left">
+                <img src="/assets/logo.svg" alt="CTN" class="logo">
+                <div class="header-title">
+                    <h1>CTN Setup</h1>
+                    <span class="subtitle">Child Tracking Necklace</span>
+                </div>
+            </div>
+            <div class="header-right">
+                <span id="device-status" class="status-badge status-disconnected">Disconnected</span>
+                <button id="theme-toggle" class="icon-btn" aria-label="Toggle dark mode">
+                    <svg class="icon-sun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                    <svg class="icon-moon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <nav class="nav" id="nav">
+            <a href="#overview" class="nav-item active" data-page="overview">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                <span>Overview</span>
+            </a>
+            <a href="#wifi" class="nav-item" data-page="wifi">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>
+                <span>WiFi</span>
+            </a>
+            <a href="#battery" class="nav-item" data-page="battery">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="23" y1="9" x2="23" y2="15"/></svg>
+                <span>Battery</span>
+            </a>
+            <a href="#gps" class="nav-item" data-page="gps">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="M4.93 4.93l1.41 1.41"/><path d="M17.66 17.66l1.41 1.41"/><path d="M2 12l1.41-1.41"/><path d="M17.66 6.34l1.41-1.41"/></svg>
+                <span>GPS</span>
+            </a>
+            <a href="#diagnostics" class="nav-item" data-page="diagnostics">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                <span>Diagnostics</span>
+            </a>
+            <a href="#settings" class="nav-item" data-page="settings">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <span>Settings</span>
+            </a>
+        </nav>
+        <main class="main" id="main">
+            <section id="page-overview" class="page active" aria-labelledby="overview-title">
+                <header class="page-header">
+                    <h2 id="overview-title">Overview</h2>
+                    <p class="page-subtitle">Device status at a glance</p>
+                </header>
+                <div class="grid grid-overview" id="overview-grid">
+                    <article class="card card-battery">
+                        <div class="card-icon battery">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="23" y1="9" x2="23" y2="15"/></svg>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-value" id="battery-percentage">--%</div>
+                            <div class="card-label">Battery</div>
+                            <div class="card-detail" id="battery-voltage">-- V</div>
+                            <div class="card-detail" id="battery-state">Unknown</div>
+                        </div>
+                    </article>
+                    <article class="card card-gps">
+                        <div class="card-icon gps">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/></svg>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-value" id="gps-satellites">--</div>
+                            <div class="card-label">Satellites</div>
+                            <div class="card-detail" id="gps-fix">No Fix</div>
+                            <div class="card-detail" id="gps-hdop">HDOP: --</div>
+                        </div>
+                    </article>
+                    <article class="card card-wifi">
+                        <div class="card-icon wifi">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12.55a11 11 0 0 1 14.08 0"/></svg>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-value" id="wifi-signal">--%</div>
+                            <div class="card-label">WiFi Signal</div>
+                            <div class="card-detail" id="wifi-ssid">Not connected</div>
+                            <div class="card-detail" id="wifi-ip">--</div>
+                        </div>
+                    </article>
+                    <article class="card card-info">
+                        <div class="card-icon info">
+                            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-value" id="firmware-version">v--</div>
+                            <div class="card-label">Firmware</div>
+                            <div class="card-detail" id="free-heap">-- KB free</div>
+                            <div class="card-detail" id="uptime">Uptime: --</div>
+                        </div>
+                    </article>
+                </div>
+
+                <div class="grid grid-details">
+                    <article class="card card-wide">
+                        <h3>Device Information</h3>
+                        <div class="info-grid" id="device-info">
+                            <div class="info-row"><span class="info-label">Device ID</span><span class="info-value" id="device-id">--</span></div>
+                            <div class="info-row"><span class="info-label">Chip ID</span><span class="info-value" id="chip-id">--</span></div>
+                            <div class="info-row"><span class="info-label">Flash Size</span><span class="info-value" id="flash-size">--</span></div>
+                            <div class="info-row"><span class="info-label">CPU Frequency</span><span class="info-value" id="cpu-freq">--</span></div>
+                            <div class="info-row"><span class="info-label">Reset Reason</span><span class="info-value" id="reset-reason">--</span></div>
+                            <div class="info-row"><span class="info-label">Behaviour State</span><span class="info-value" id="behaviour-state">--</span></div>
+                            <div class="info-row"><span class="info-label">Risk Score</span><span class="info-value" id="risk-score">--</span></div>
+                        </div>
+                    </article>
+                    <article class="card card-wide">
+                        <h3>Network Details</h3>
+                        <div class="info-grid" id="network-info">
+                            <div class="info-row"><span class="info-label">Connection State</span><span class="info-value" id="connection-state">--</span></div>
+                            <div class="info-row"><span class="info-label">Gateway</span><span class="info-value" id="gateway">--</span></div>
+                            <div class="info-row"><span class="info-label">DNS</span><span class="info-value" id="dns">--</span></div>
+                            <div class="info-row"><span class="info-label">Subnet Mask</span><span class="info-value" id="subnet">--</span></div>
+                            <div class="info-row"><span class="info-label">MAC Address</span><span class="info-value" id="mac">--</span></div>
+                            <div class="info-row"><span class="info-label">Internet</span><span class="info-value" id="internet">--</span></div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+
+            <section id="page-wifi" class="page" aria-labelledby="wifi-title">
+                <header class="page-header">
+                    <h2 id="wifi-title">WiFi Configuration</h2>
+                    <p class="page-subtitle">Scan, connect, and manage networks</p>
+                </header>
+                <div class="card">
+                    <h3>Current Connection</h3>
+                    <div class="info-grid" id="current-wifi">
+                        <div class="info-row"><span class="info-label">Status</span><span class="info-value" id="cur-status">Disconnected</span></div>
+                        <div class="info-row"><span class="info-label">SSID</span><span class="info-value" id="cur-ssid">--</span></div>
+                        <div class="info-row"><span class="info-label">Signal</span><span class="info-value" id="cur-signal">--</span></div>
+                        <div class="info-row"><span class="info-label">IP Address</span><span class="info-value" id="cur-ip">--</span></div>
+                    </div>
+                    <div class="card-actions">
+                        <button id="btn-reconnect" class="btn btn-secondary" disabled>Reconnect</button>
+                        <button id="btn-disconnect" class="btn btn-danger" disabled>Disconnect</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <h3>Available Networks</h3>
+                        <button id="btn-scan" class="btn btn-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                            Scan
+                        </button>
+                    </div>
+                    <div id="scan-status" class="scan-status hidden">
+                        <span class="spinner"></span> Scanning networks...
+                    </div>
+                    <div id="scan-error" class="error-message hidden"></div>
+                    <ul id="network-list" class="network-list">
+                        <li class="network-empty">Click "Scan" to find networks</li>
+                    </ul>
+                </div>
+
+                <div class="card">
+                    <h3>Saved Networks</h3>
+                    <ul id="saved-list" class="network-list">
+                        <li class="network-empty">No saved networks</li>
+                    </ul>
+                </div>
+            </section>
+
+            <section id="page-battery" class="page" aria-labelledby="battery-title">
+                <header class="page-header">
+                    <h2 id="battery-title">Battery Status</h2>
+                    <p class="page-subtitle">Monitor power consumption and health</p>
+                </header>
+                <div class="grid grid-battery">
+                    <article class="card card-battery-main">
+                        <div class="battery-visual">
+                            <div class="battery-container">
+                                <div class="battery-body">
+                                    <div class="battery-fill" id="battery-fill"></div>
+                                </div>
+                                <div class="battery-tip"></div>
+                            </div>
+                            <div class="battery-percentage" id="battery-percentage">--%</div>
+                        </div>
+                        <div class="battery-details">
+                            <div class="detail-row"><span class="detail-label">Voltage</span><span class="detail-value" id="bat-voltage">-- V</span></div>
+                            <div class="detail-row"><span class="detail-label">State</span><span class="detail-value" id="bat-state">Unknown</span></div>
+                            <div class="detail-row"><span class="detail-label">Charging</span><span class="detail-value" id="bat-charging">No</span></div>
+                            <div class="detail-row"><span class="detail-label">Health</span><span class="detail-value" id="bat-health">--</span></div>
+                            <div class="detail-row"><span class="detail-label">Runtime Est.</span><span class="detail-value" id="bat-runtime">-- hours</span></div>
+                            <div class="detail-row"><span class="detail-label">Power Mode</span><span class="detail-value" id="bat-power-mode">Normal</span></div>
+                        </div>
+                    </article>
+                    <article class="card card-wide">
+                        <h3>Battery History</h3>
+                        <div class="chart-placeholder" id="battery-chart">Chart placeholder - requires Chart.js</div>
+                        <p class="chart-note">Historical data requires persistent storage integration</p>
+                    </article>
+                </div>
+            </section>
+
+            <section id="page-gps" class="page" aria-labelledby="gps-title">
+                <header class="page-header">
+                    <h2 id="gps-title">GPS Status</h2>
+                    <p class="page-subtitle">Satellite positioning data</p>
+                </header>
+                <div class="grid grid-gps">
+                    <article class="card card-gps-main">
+                        <div class="gps-status" id="gps-status">
+                            <div class="gps-fix-indicator" id="gps-fix-indicator"></div>
+                            <div class="gps-fix-text" id="gps-fix-text">Searching for satellites...</div>
+                        </div>
+                        <div class="gps-coords">
+                            <div class="coord-row">
+                                <span class="coord-label">Latitude</span>
+                                <span class="coord-value" id="gps-lat">--</span>
+                            </div>
+                            <div class="coord-row">
+                                <span class="coord-label">Longitude</span>
+                                <span class="coord-value" id="gps-lon">--</span>
+                            </div>
+                        </div>
+                        <div class="gps-map-link">
+                            <a id="maps-link" href="#" target="_blank" class="btn btn-primary" disabled>
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+                                Open in Google Maps
+                            </a>
+                        </div>
+                    </article>
+                    <article class="card">
+                        <h3>Signal Quality</h3>
+                        <div class="info-grid">
+                            <div class="info-row"><span class="info-label">Satellites</span><span class="info-value" id="gps-sat-count">--</span></div>
+                            <div class="info-row"><span class="info-label">HDOP</span><span class="info-value" id="gps-hdop">--</span></div>
+                            <div class="info-row"><span class="info-label">Accuracy</span><span class="info-value" id="gps-accuracy">-- m</span></div>
+                            <div class="info-row"><span class="info-label">Fix Type</span><span class="info-value" id="gps-fix-type">--</span></div>
+                        </div>
+                    </article>
+                    <article class="card">
+                        <h3>Movement</h3>
+                        <div class="info-grid">
+                            <div class="info-row"><span class="info-label">Speed</span><span class="info-value" id="gps-speed">-- km/h</span></div>
+                            <div class="info-row"><span class="info-label">Heading</span><span class="info-value" id="gps-heading">--&deg;</span></div>
+                            <div class="info-row"><span class="info-label">Altitude</span><span class="info-value" id="gps-altitude">-- m</span></div>
+                        </div>
+                    </article>
+                    <article class="card">
+                        <h3>Time</h3>
+                        <div class="info-grid">
+                            <div class="info-row"><span class="info-label">UTC Time</span><span class="info-value" id="gps-time">--</span></div>
+                            <div class="info-row"><span class="info-label">Date</span><span class="info-value" id="gps-date">--</span></div>
+                            <div class="info-row"><span class="info-label">Time Valid</span><span class="info-value" id="gps-time-valid">No</span></div>
+                        </div>
+                    </article>
+                </div>
+            </section>
+            <section id="page-diagnostics" class="page" aria-labelledby="diag-title">
+                <header class="page-header">
+                    <h2 id="diag-title">Diagnostics</h2>
+                    <p class="page-subtitle">System health and performance metrics</p>
+                    <button id="btn-download-diag" class="btn btn-secondary">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                        Download JSON
+                    </button>
+                </header>
+                <div class="grid grid-diag">
+                    <article class="card">
+                        <h3>Memory</h3>
+                        <div class="info-grid">
+                            <div class="info-row"><span class="info-label">Free Heap</span><span class="info-value" id="diag-free-heap">-- KB</span></div>
+                            <div class="info-row"><span class="info-label">Max Free Block</span><span class="info-value" id="diag-max-block">-- KB</span></div>
+                            <div class="info-row"><span class="info-label">Fragmentation</span><span class="info-value" id="diag-frag">--%</span></div>
+                            <div class="info-row progress-row"><span class="info-label">Usage</span><div class="progress-bar"><div class="progress-fill" id="diag-mem-progress"></div></div></div>
+                        </div>
+                    </article>
+                    <article class="card">
+                        <h3>Flash</h3>
+                        <div class="info-grid">
+                            <div class="info-row"><span class="info-label">Chip Size</span><span class="info-value" id="diag-flash-size">-- KB</span></div>
+                            <div class="info-row"><span class="info-label">Sketch Size</span><span class="info-value" id="diag-sketch-size">-- KB</span></div>
+                            <div class="info-row"><span class="info-label">Free Space</span><span class="info-value" id="diag-free-sketch">-- KB</span></div>
+                            <div class="info-row progress-row"><span class="info-label">Usage</span><div class="progress-bar"><div class="progress-fill" id="diag-flash-progress"></div></div></div>
+                        </div>
+                    </article>
+                    <article class="card">
+                        <h3>CPU</h3>
+                        <div class="info-grid">
+                            <div class="info-row"><span class="info-label">Frequency</span><span class="info-value" id="diag-cpu-freq">-- MHz</span></div>
+                            <div class="info-row"><span class="info-label">Chip ID</span><span class="info-value" id="diag-chip-id">--</span></div>
+                            <div class="info-row"><span class="info-label">Flash Chip ID</span><span class="info-value" id="diag-flash-chip-id">--</span></div>
+                        </div>
+                    </article>
+                    <article class="card">
+                        <h3>System</h3>
+                        <div class="info-grid">
+                            <div class="info-row"><span class="info-label">Firmware</span><span class="info-value" id="diag-fw">--</span></div>
+                            <div class="info-row"><span class="info-label">Uptime</span><span class="info-value" id="diag-uptime">--</span></div>
+                            <div class="info-row"><span class="info-label">Reset Reason</span><span class="info-value" id="diag-reset">--</span></div>
+                            <div class="info-row"><span class="info-label">Last Reboot</span><span class="info-value" id="diag-last-reboot">--</span></div>
+                        </div>
+                    </article>
+                    <article class="card">
+                        <h3>WiFi</h3>
+                        <div class="info-grid">
+                            <div class="info-row"><span class="info-label">RSSI</span><span class="info-value" id="diag-rssi">-- dBm</span></div>
+                            <div class="info-row"><span class="info-label">Channel</span><span class="info-value" id="diag-channel">--</span></div>
+                            <div class="info-row"><span class="info-label">Mode</span><span class="info-value" id="diag-wifi-mode">--</span></div>
+                        </div>
+                    </article>
+                    <article class="card card-wide">
+                        <h3>Raw JSON</h3>
+                        <pre id="diag-json" class="json-viewer">{}</pre>
+                    </article>
+                </div>
+            </section>
+
+            <section id="page-settings" class="page" aria-labelledby="settings-title">
+                <header class="page-header">
+                    <h2 id="settings-title">Settings</h2>
+                    <p class="page-subtitle">Device configuration and maintenance</p>
+                </header>
+                <div class="grid grid-settings">
+                    <article class="card card-wide">
+                        <h3>Device Identity</h3>
+                        <div class="form-group">
+                            <label for="device-name">Device Name</label>
+                            <input type="text" id="device-name" class="form-input" placeholder="CTN-001" disabled>
+                            <span class="form-hint">Change requires firmware update</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="fw-version">Firmware Version</label>
+                            <input type="text" id="fw-version" class="form-input" placeholder="1.0" disabled>
+                        </div>
+                    </article>
+
+                    <article class="card card-wide">
+                        <h3>Actions</h3>
+                        <div class="settings-actions">
+                            <div class="action-item">
+                                <div class="action-info">
+                                    <h4>Restart Device</h4>
+                                    <p>Soft reboot the ESP8266</p>
+                                </div>
+                                <button id="btn-restart" class="btn btn-secondary">Restart</button>
+                            </div>
+                            <div class="action-item danger">
+                                <div class="action-info">
+                                    <h4>Factory Reset</h4>
+                                    <p>Erase all WiFi credentials and restart in AP mode</p>
+                                </div>
+                                <button id="btn-factory-reset" class="btn btn-danger">Factory Reset</button>
+                            </div>
+                        </div>
+                    </article>
+
+                    <article class="card card-wide">
+                        <h3>OTA Updates</h3>
+                        <div class="info-grid">
+                            <div class="info-row"><span class="info-label">Status</span><span class="info-value" id="ota-status">Not available in AP mode</span></div>
+                            <div class="info-row"><span class="info-label">Current Version</span><span class="info-value" id="ota-version">--</span></div>
+                        </div>
+                    </article>
+
+                    <article class="card card-wide">
+                        <h3>Export Configuration</h3>
+                        <button id="btn-export-settings" class="btn btn-secondary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                            Download Settings JSON
+                        </button>
+                    </article>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-left">
+                <span>CTN v<span id="footer-fw">1.0</span></span>
+                <span class="footer-separator">|</span>
+                <span id="footer-ip">192.168.4.1</span>
+            </div>
+            <div class="footer-right">
+                <span id="footer-uptime">Uptime: 0s</span>
+            </div>
+        </footer>
+    </div>
+
+    <div id="toast-container" class="toast-container"></div>
+    <div id="modal-overlay" class="modal-overlay hidden">
+        <div class="modal">
+            <h3 id="modal-title">Confirm</h3>
+            <p id="modal-message">Are you sure?</p>
+            <div class="modal-actions">
+                <button id="modal-cancel" class="btn btn-secondary">Cancel</button>
+                <button id="modal-confirm" class="btn btn-danger">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,17 @@
+{
+  "name": "CTN Setup",
+  "short_name": "CTN",
+  "description": "Child Tracking Necklace - AP Configuration Dashboard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1E88E5",
+  "icons": [
+    {
+      "src": "/assets/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
