@@ -157,6 +157,11 @@
     removeWiFi(ssid) { return this.delete("/api/wifi/remove", { ssid }); },
     restartDevice() { return this.post("/api/device/restart"); },
     factoryReset() { return this.post("/api/device/reset"); },
+
+    // Telegram API
+    getTelegramStatus() { return this.get("/api/telegram/status"); },
+    saveTelegram(botToken, chatId, enabled = true, alerts = {}) { return this.post("/api/telegram/save", { botToken, chatId, enabled, alerts }); },
+    testTelegram() { return this.post("/api/telegram/test", {}); },
   };
 
   // ============================================================
@@ -864,6 +869,9 @@
         $("#auto-refresh").value = STATE.autoRefreshInterval.toString();
         $("#enable-notifications").checked = STATE.notificationsEnabled;
 
+        // Load Telegram configuration
+        await this.loadTelegramConfig();
+
         const select = $("#device-select");
         if (select) {
           select.addEventListener("change", (e) => {
@@ -926,7 +934,109 @@
             Notification.requestPermission().then(p => { STATE.notificationPermission = p; });
           }
         });
+
+        // Telegram configuration handlers
+        $("#btn-tg-save").onclick = async () => await this.saveTelegramConfig();
+        $("#btn-tg-test").onclick = async () => await this.testTelegramConfig();
       } catch (error) { console.error("Settings load failed:", error); }
+    },
+
+    async loadTelegramConfig() {
+      try {
+        if (!STATE.currentDevice) return;
+        const status = await api.getTelegramStatus();
+        const hasConfig = status.configured || status.hasToken || status.hasChatId;
+
+        if (hasConfig) {
+          // We can't read the actual token/chatId from status (security),
+          // but we can show the configured state
+          $("#tg-enabled").checked = status.enabled || false;
+        }
+
+        // Try to load from localStorage as fallback for UX
+        const saved = localStorage.getItem(`ctn-telegram-${STATE.currentDevice}`);
+        if (saved) {
+          const config = JSON.parse(saved);
+          $("#tg-bot-token").value = config.botToken || "";
+          $("#tg-chat-id").value = config.chatId || "";
+          $("#tg-enabled").checked = config.enabled !== false;
+          $("#tg-panic").checked = config.alerts?.panic !== false;
+          $("#tg-battery").checked = config.alerts?.battery !== false;
+          $("#tg-geofence").checked = config.alerts?.geofence !== false;
+          $("#tg-behaviour").checked = config.alerts?.behaviour !== false;
+        }
+      } catch (error) {
+        console.error("Failed to load Telegram config:", error);
+      }
+    },
+
+    async saveTelegramConfig() {
+      try {
+        if (!STATE.currentDevice) { toast.warning("Select a device first"); return; }
+
+        const botToken = $("#tg-bot-token").value.trim();
+        const chatId = $("#tg-chat-id").value.trim();
+        const enabled = $("#tg-enabled").checked;
+
+        if (!botToken || !chatId) {
+          toast.error("Bot token and Chat ID are required");
+          return;
+        }
+
+        const alerts = {
+          panic: $("#tg-panic").checked,
+          battery: $("#tg-battery").checked,
+          geofence: $("#tg-geofence").checked,
+          behaviour: $("#tg-behaviour").checked,
+        };
+
+        await api.saveTelegram(botToken, chatId, enabled, alerts);
+
+        // Save to localStorage for UI persistence
+        const config = { botToken, chatId, enabled, alerts, savedAt: Date.now() };
+        localStorage.setItem(`ctn-telegram-${STATE.currentDevice}`, JSON.stringify(config));
+
+        this.showTelegramStatus("Configuration saved successfully", "success");
+        toast.success("Telegram configuration saved successfully");
+      } catch (error) {
+        console.error("Failed to save Telegram config:", error);
+        this.showTelegramStatus("Failed to save: " + error.message, "error");
+        toast.error("Failed to save Telegram config: " + error.message);
+      }
+    },
+
+    showTelegramStatus(message, type = "info") {
+      const el = $("#tg-status");
+      if (!el) return;
+      el.textContent = message;
+      el.className = "telegram-status " + type;
+    },
+
+    async testTelegramConfig() {
+      try {
+        if (!STATE.currentDevice) { toast.warning("Select a device first"); return; }
+
+        const btn = $("#btn-tg-test");
+        btn.disabled = true;
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spinning"><circle cx="12" cy="12" r="10" stroke-opacity="0.25"/><path d="M12 2a10 10 0 0 1 10 10" stroke-opacity="1"/></svg> Sending...`;
+
+        this.showTelegramStatus("Sending test message...", "info");
+
+        await api.testTelegram();
+
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Send Test Message`;
+
+        this.showTelegramStatus("Test message sent successfully!", "success");
+        toast.success("Test message sent! Check your Telegram.");
+      } catch (error) {
+        const btn = $("#btn-tg-test");
+        btn.disabled = false;
+        btn.innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Send Test Message`;
+        console.error("Telegram test failed:", error);
+        this.showTelegramStatus("Test failed: " + error.message, "error");
+        toast.error("Test failed: " + error.message);
+      }
     },
 
     showNoDeviceMessage(pageId) {

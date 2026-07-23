@@ -142,6 +142,11 @@ const api = {
     return this.delete("/wifi/remove", { ssid }); 
   },
 
+  // Telegram
+  getTelegramStatus() { return this.get("/telegram/status"); },
+  saveTelegram(config) { return this.post("/telegram/save", config); },
+  testTelegram() { return this.post("/telegram/test"); },
+
   // Device Control
   restartDevice() { return this.post("/device/restart"); },
   factoryReset() { return this.post("/device/reset"); },
@@ -768,20 +773,63 @@ const pageLoader = {
 
   async loadSettings() {
     try {
-      const device = await api.getDevice();
-      
+      const [device, tgStatus] = await Promise.all([
+        api.getDevice(),
+        api.getTelegramStatus(),
+      ]);
+
       $("#device-name").value = device.deviceName || "CTN-001";
       $("#fw-version").value = device.firmwareVersion || "1.0";
       $("#ota-version").textContent = device.firmwareVersion || "1.0";
       $("#footer-fw").textContent = device.firmwareVersion || "1.0";
-      
+
+      // Telegram Settings
+      this.updateTelegramUI(tgStatus);
+
+      $("#tg-save").onclick = async () => {
+        const config = {
+          botToken: $("#tg-bot-token").value.trim(),
+          chatId: $("#tg-chat-id").value.trim(),
+          enabled: $("#tg-enabled").checked,
+        };
+
+        if (!config.botToken || !config.chatId) {
+          toast.error("Bot Token and Chat ID are required");
+          return;
+        }
+
+        try {
+          await api.saveTelegram(config);
+          toast.success("Telegram configuration saved");
+          // Refresh status
+          const status = await api.getTelegramStatus();
+          this.updateTelegramUI(status);
+        } catch (error) {
+          toast.error("Save failed: " + error.message);
+        }
+      };
+
+      $("#tg-test").onclick = async () => {
+        try {
+          $("#tg-test").disabled = true;
+          $("#tg-test").textContent = "Sending...";
+          await api.testTelegram();
+          toast.success("Test message sent!");
+        } catch (error) {
+          toast.error("Test failed: " + error.message);
+        } finally {
+          $("#tg-test").disabled = false;
+          $("#tg-test").innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Send Test Message`;
+        }
+      };
+
       $("#btn-restart").onclick = async () => {
         const confirmed = await modal.confirm(
           "Restart Device",
           "This will reboot the device. You will need to reconnect to the AP.",
           "Restart"
         );
-        
+
         if (confirmed) {
           toast.info("Restarting device...");
           try {
@@ -792,7 +840,7 @@ const pageLoader = {
           }
         }
       };
-      
+
       $("#btn-factory-reset").onclick = async () => {
         const confirmed = await modal.confirm(
           "Factory Reset",
@@ -800,7 +848,7 @@ const pageLoader = {
           "Factory Reset",
           true
         );
-        
+
         if (confirmed) {
           toast.warning("Performing factory reset...");
           try {
@@ -811,14 +859,14 @@ const pageLoader = {
           }
         }
       };
-      
+
       $("#btn-export-settings").onclick = async () => {
         try {
           const [device, wifi] = await Promise.all([
             api.getDevice(),
             api.getSavedWiFi(),
           ]);
-          
+
           const exportData = {
             device: {
               deviceName: device.deviceName,
@@ -834,7 +882,7 @@ const pageLoader = {
             },
             exportedAt: new Date().toISOString(),
           };
-          
+
           const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: "application/json" });
           const url = URL.createObjectURL(blob);
           const a = document.createElement("a");
@@ -842,15 +890,37 @@ const pageLoader = {
           a.download = `ctn-settings-${Date.now()}.json`;
           a.click();
           URL.revokeObjectURL(url);
-          
+
           toast.success("Settings exported");
         } catch (error) {
           toast.error("Export failed: " + error.message);
         }
       };
-      
+
     } catch (error) {
       console.error("Settings load failed:", error);
+    }
+  },
+
+  updateTelegramUI(status) {
+    const configured = status.configured;
+    const enabled = status.enabled;
+    const hasToken = status.hasToken;
+    const hasChatId = status.hasChatId;
+
+    $("#tg-status").classList.remove("hidden");
+    $("#tg-status").className = "telegram-status " + (configured ? "status-configured" : "status-not-configured");
+    $("#tg-status").textContent = configured
+      ? `✓ Configured ${enabled ? "(Enabled)" : "(Disabled)"}`
+      : "⚠ Not configured";
+
+    if (configured) {
+      // Mask token for display
+      // We don't have the actual token from the API for security
+      // User will need to re-enter if they want to change
+      $("#tg-bot-token").placeholder = hasToken ? "••••••••••••••••••••••••••••••••••••" : "Enter bot token";
+      $("#tg-chat-id").placeholder = hasChatId ? "•••••••••" : "Enter chat ID";
+      $("#tg-enabled").checked = enabled;
     }
   },
 };

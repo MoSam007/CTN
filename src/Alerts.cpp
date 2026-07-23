@@ -38,7 +38,6 @@ static String priorityToString(AlertPriority p);
 static String getTimeString(unsigned long timestamp);
 static unsigned long getCurrentHour();
 static float getTotalDistanceToday();
-static bool telegramConfigured();
 
 // Initialisation
 void initialiseAlerts() {
@@ -584,12 +583,6 @@ static float getTotalDistanceToday() {
     // Placeholder - would need to track distance over time
     // For now, return 0 as this requires persistent storage
     return 0.0f;
-}
-
-static bool telegramConfigured() {
-    TelegramConfig config;
-    if (!loadTelegramConfig(config)) return false;
-    return config.enabled && config.botToken.length() > 0 && config.chatId.length() > 0;
 }
 
 static String getTimeString(unsigned long timestamp) {

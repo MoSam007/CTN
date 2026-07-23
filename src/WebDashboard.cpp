@@ -7,6 +7,8 @@
 #include "WiFiManager.h"
 #include "Behaviour.h"
 #include "Storage.h"
+#include "Telegram.h"
+#include "Alerts.h"
 
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
@@ -23,6 +25,10 @@ static bool webDashboardRunning = false;
 // Forward declarations
 JsonDocument createSuccessResponse(const String& message);
 JsonDocument createErrorResponse(const String& message);
+
+void handleAPITelegramStatus();
+void handleAPITelegramSave();
+void handleAPITelegramTest();
 
 //----------------------------------------------------
 // Helper Functions
@@ -150,6 +156,10 @@ void initWebDashboard() {
 
     server.on("/api/device/restart", HTTP_POST, handleAPIDeviceRestart);
     server.on("/api/device/reset", HTTP_POST, handleAPIDeviceReset);
+
+    server.on("/api/telegram/status", HTTP_GET, handleAPITelegramStatus);
+    server.on("/api/telegram/save", HTTP_POST, handleAPITelegramSave);
+    server.on("/api/telegram/test", HTTP_POST, handleAPITelegramTest);
 
     // File serving routes
     server.on("/", HTTP_GET, []() {
@@ -540,4 +550,81 @@ void handleAPIDeviceReset() {
     sendSuccessResponse(200, "Factory reset complete. Device will restart.");
     delay(1000);
     ESP.restart();
+}
+
+//----------------------------------------------------
+// REST API Endpoints - Telegram Config
+//----------------------------------------------------
+void handleAPITelegramStatus() {
+    JsonDocument doc;
+
+    TelegramConfig config;
+    loadTelegramConfig(config);
+
+    if (telegramConfigured()) {
+        doc["configured"] = true;
+        doc["enabled"] = config.enabled;
+        doc["hasToken"] = true;
+        doc["hasChatId"] = true;
+    } else {
+        doc["configured"] = false;
+        doc["enabled"] = false;
+        doc["hasToken"] = false;
+        doc["hasChatId"] = false;
+    }
+
+    // Don't expose actual token/chat_id for security
+    sendJSONResponse(200, doc);
+}
+
+void handleAPITelegramSave() {
+    JsonDocument jsonDoc;
+    parseJSONBody(jsonDoc);
+
+    if (!hasArg("botToken", &jsonDoc) || !hasArg("chatId", &jsonDoc)) {
+        sendErrorResponse(400, "Missing botToken or chatId parameter");
+        return;
+    }
+
+    String botToken = getArg("botToken", &jsonDoc);
+    String chatId = getArg("chatId", &jsonDoc);
+    bool enabled = !hasArg("enabled", &jsonDoc) || getArg("enabled", &jsonDoc) == "true";
+
+    if (botToken.length() == 0 || chatId.length() == 0) {
+        sendErrorResponse(400, "botToken and chatId cannot be empty");
+        return;
+    }
+
+    TelegramConfig config;
+    config.botToken = botToken;
+    config.chatId = chatId;
+    config.enabled = enabled;
+
+    if (saveTelegramConfig(config)) {
+        reloadTelegramConfig(); // Force reload
+
+        // Also update AlertConfig to enable/disable Telegram alerts
+        AlertConfig alertConfig;
+        loadAlertConfig(alertConfig);
+        alertConfig.telegramEnabled = enabled;
+        saveAlertConfig(alertConfig);
+
+        sendSuccessResponse(200, "Telegram configuration saved");
+    } else {
+        sendErrorResponse(500, "Failed to save Telegram configuration");
+    }
+}
+
+void handleAPITelegramTest() {
+    if (!telegramConfigured()) {
+        sendErrorResponse(400, "Telegram not configured");
+        return;
+    }
+
+    // Send test message
+    if (sendInformation("CTN Test Message - Telegram is working!")) {
+        sendSuccessResponse(200, "Test message sent successfully");
+    } else {
+        sendErrorResponse(500, "Failed to send test message - check WiFi");
+    }
 }

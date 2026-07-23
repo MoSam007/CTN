@@ -155,6 +155,7 @@ void setup()
     initialiseGPS();
     initialiseTelegram();
     initialiseBehaviour();
+    initialiseAlerts();
 
     Serial.println();
     Serial.println("System Initialisation Complete.");

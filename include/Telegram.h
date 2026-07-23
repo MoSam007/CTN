@@ -10,6 +10,13 @@
 void initialiseTelegram();
 
 //--------------------------------------------------
+// Configuration & Status
+//--------------------------------------------------
+
+bool telegramConfigured();
+void reloadTelegramConfig();  // Force reload from storage
+
+//--------------------------------------------------
 // Alert Functions
 //--------------------------------------------------
 

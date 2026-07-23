@@ -38,6 +38,11 @@ bool telegramConfigured() {
     return telegramConfig.enabled && telegramConfig.botToken.length() > 0 && telegramConfig.chatId.length() > 0;
 }
 
+void reloadTelegramConfig() {
+    telegramConfigLoaded = false;
+    telegramConfigured();  // Will reload
+}
+
 static bool enqueueTelegramMessage(const String& message, bool isEmergency) {
     if (telegramQueueCount >= MAX_TELEGRAM_QUEUE) {
         // Remove oldest non-emergency message to make room

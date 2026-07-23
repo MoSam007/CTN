@@ -251,6 +251,64 @@
                     </article>
 
                     <article class="card card-wide">
+                        <h3>Telegram Notifications</h3>
+                        <p class="form-hint" style="margin-bottom: var(--space-4);">Configure Telegram bot for instant alerts (panic button, geofence, low battery, behaviour anomalies)</p>
+                        <div class="form-group">
+                            <label for="tg-bot-token">Bot Token</label>
+                            <input type="text" id="tg-bot-token" class="form-input" placeholder="8877947480:AAEQ8WjcvN3IxxdMbz9GEKjOjs1LfKdzphw">
+                            <span class="form-hint">Get from @BotFather on Telegram</span>
+                        </div>
+                        <div class="form-group">
+                            <label for="tg-chat-id">Chat ID</label>
+                            <input type="text" id="tg-chat-id" class="form-input" placeholder="123456789">
+                            <span class="form-hint">Your user ID or group ID. Get from @userinfobot</span>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="tg-enabled" checked>
+                                <span class="checkbox-custom"></span>
+                                Enable Telegram alerts
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="tg-panic" checked>
+                                <span class="checkbox-custom"></span>
+                                Panic button alerts
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="tg-battery" checked>
+                                <span class="checkbox-custom"></span>
+                                Low battery alerts
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="tg-geofence" checked>
+                                <span class="checkbox-custom"></span>
+                                Geofence entry/exit alerts
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="tg-behaviour" checked>
+                                <span class="checkbox-custom"></span>
+                                Behaviour anomaly alerts
+                            </label>
+                        </div>
+                        <div class="card-actions">
+                            <button id="btn-tg-test" class="btn btn-secondary">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                Send Test Message
+                            </button>
+                            <button id="btn-tg-save" class="btn btn-primary">Save Configuration</button>
+                        </div>
+                        <div id="tg-status" class="telegram-status hidden"></div>
+                    </article>
+
+                    <article class="card card-wide">
                         <h3>Device Management</h3>
                         <div class="settings-actions">
                             <div class="action-item">

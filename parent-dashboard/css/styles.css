@@ -1630,9 +1630,50 @@ ul, ol {
   stroke-width: 3 !important;
 }
 
-/* ============================================================
-   Responsive
-   ============================================================ */
+/* Telegram Configuration Styles */
+.telegram-status {
+  margin-top: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  font-size: var(--text-sm);
+  transition: all var(--transition-fast);
+}
+
+.telegram-status.success {
+  background: var(--color-success-light);
+  color: var(--color-success);
+  border: 1px solid var(--color-success);
+}
+
+.telegram-status.error {
+  background: var(--color-danger-light);
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+}
+
+.telegram-status.info {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+  border: 1px solid var(--color-primary);
+}
+
+.telegram-status.hidden {
+  display: none;
+}
+
+/* Spinner for buttons */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+.btn .spinning {
+  display: inline-block;
+}
 @media (max-width: 480px) {
   :root {
     --header-height: 56px;
@@ -1644,9 +1685,17 @@ ul, ol {
     display: none;
   }
 
+  .device-selector {
+    z-index: var(--z-dropdown);
+  }
   .device-selector .form-select {
-    min-width: 120px;
-    padding-right: var(--space-6);
+    min-width: 140px;
+    padding-right: var(--space-8);
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+  .device-selector select {
+    /* Ensure dropdown isn't clipped */
+    max-width: calc(100vw - 32px);
   }
 
   .nav-item span {
