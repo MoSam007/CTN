@@ -1171,6 +1171,20 @@
     storage.load();
     pageLoader.updateDeviceSelector();
 
+    // Header scroll effect
+    const header = $(".header");
+    if (header) {
+      const handleScroll = () => {
+        if (window.scrollY > 10) {
+          header.classList.add("scrolled");
+        } else {
+          header.classList.remove("scrolled");
+        }
+      };
+      window.addEventListener("scroll", handleScroll, { passive: true });
+      handleScroll();
+    }
+
     const hash = window.location.hash.slice(1);
     if (hash && $("#page-" + hash)) navigation.switchPage(hash);
     else navigation.switchPage("map");
