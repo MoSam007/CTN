@@ -22,40 +22,50 @@ bool initialiseStorage() {
     LittleFS.info(fs_info);
     Serial.print("Total: "); Serial.print(fs_info.totalBytes); Serial.println(" bytes");
     Serial.print("Used:  "); Serial.print(fs_info.usedBytes); Serial.println(" bytes");
-    
+
     // Create default configs if they don't exist
     if (!storageExists(STORAGE_WIFI_FILE)) {
         WiFiNetwork defaultNetworks[MAX_WIFI_NETWORKS];
         uint8_t count = 0;
         saveWiFiNetworks(defaultNetworks, count);
     }
-    
+
     if (!storageExists(STORAGE_TELEGRAM_FILE)) {
         TelegramConfig cfg;
+#ifdef TELEGRAM_BOT_TOKEN
+        cfg.botToken = TELEGRAM_BOT_TOKEN;
+        Serial.printf("Loaded Telegram bot token from build config: %s\n", TELEGRAM_BOT_TOKEN);
+#endif
+#ifdef TELEGRAM_CHAT_ID
+        cfg.chatId = TELEGRAM_CHAT_ID;
+        Serial.printf("Loaded Telegram chat ID from build config: %s\n", TELEGRAM_CHAT_ID);
+#endif
+        cfg.enabled = true;
         saveTelegramConfig(cfg);
+        Serial.println("Created default Telegram config");
     }
-    
+
     if (!storageExists(STORAGE_SAFEZONES_FILE)) {
         SafeZone zones[MAX_SAFE_ZONES];
         uint8_t count = 0;
         saveSafeZones(zones, count);
     }
-    
+
     if (!storageExists(STORAGE_SETTINGS_FILE)) {
         DeviceSettings settings;
         saveDeviceSettings(settings);
     }
-    
+
     if (!storageExists(STORAGE_BATTERY_FILE)) {
         BatteryCalibration cal;
         saveBatteryCalibration(cal);
     }
-    
+
     if (!storageExists(STORAGE_BEHAVIOUR_FILE)) {
         BehaviourProfile profile;
         saveBehaviourProfile(profile);
     }
-    
+
     return true;
 }
 

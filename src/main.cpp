@@ -185,6 +185,9 @@ void loop()
         updateBattery();
     }
 
+    // Retry queued Telegram messages
+    retryQueuedTelegramMessages();
+
     if (millis() - statusTimer >= 10000)
     {
         statusTimer = millis();
@@ -200,4 +203,7 @@ void loop()
     }
 
     serviceWebDashboard();
+
+    // Retry queued Telegram messages when WiFi is available
+    retryQueuedTelegramMessages();
 }

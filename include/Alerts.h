@@ -124,6 +124,11 @@ bool sendNightMovementAlert(float speed, const String& location);
 bool sendRepeatedMovementAlert(uint8_t count, const String& location);
 bool sendUnexpectedMovementAlert(const String& location);
 
+// New format functions matching requirements
+bool sendLowBatteryAlert(uint8_t batteryPercent);
+bool sendSafeArrivalAlert(const String& zoneName, double lat, double lon, uint8_t batteryPercent);
+bool sendBehaviourAlert(const String& description, const String& riskLevel, const String& recommendation, double lat, double lon);
+
 uint8_t getPendingAlertCount();
 bool hasPendingAlerts();
 void acknowledgeAlert(uint8_t index);

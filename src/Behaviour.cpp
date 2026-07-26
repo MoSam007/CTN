@@ -7,6 +7,7 @@
 #include "Storage.h"
 #include "Alerts.h"
 #include "Logger.h"
+#include "Battery.h"
 
 #include <LittleFS.h>
 #include <ArduinoJson.h>
@@ -869,10 +870,13 @@ void panicAlert() {
     event.speed = getSpeed();
     addAnomalyEvent(event);
 
-    triggerBehaviourAlert(ALERT_PANIC_BUTTON, "PANIC ALERT",
-                          "Panic button pressed - EMERGENCY",
-                          "Lat: " + String(getLatitude(), 6) + ", Lon: " + String(getLongitude(), 6),
-                          ALERT_PRIORITY_CRITICAL);
+    // Use new format matching requirements
+    String lat = String(getLatitude(), 6);
+    String lon = String(getLongitude(), 6);
+    String googleMapsLink = "https://maps.google.com/?q=" + lat + "," + lon;
+    uint8_t batteryPercent = getBatteryPercentage();
+
+    telegramSendPanicAlert(lat, lon, googleMapsLink, batteryPercent, DEVICE_NAME);
 }
 
 void printBehaviourStatus() {

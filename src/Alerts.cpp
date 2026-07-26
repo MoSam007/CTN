@@ -177,6 +177,31 @@ bool sendLowBatteryAlert(uint8_t batteryPercent, const String& location) {
     return triggerAlert(ALERT_LOW_BATTERY_20, title, msg, location, priority);
 }
 
+bool sendLowBatteryAlert(uint8_t batteryPercent) {
+    // Use the format from requirements: ⚠ Battery Low / Battery: XX% / Please recharge the device.
+    if (telegramConfigured() && alertConfig.telegramEnabled) {
+        return telegramSendLowBatteryAlert(batteryPercent);
+    }
+    return false;
+}
+
+bool sendSafeArrivalAlert(const String& zoneName, double lat, double lon, uint8_t batteryPercent) {
+    // Use the format from requirements: ✅ Safe Arrival / Child has arrived at Home / Time: / Battery: / Location: Lat/Long
+    if (telegramConfigured() && alertConfig.telegramEnabled) {
+        String timeStr = String(millis() / 1000) + "s";
+        return telegramSendSafeArrivalAlert(zoneName, timeStr, batteryPercent, String(lat, 6), String(lon, 6));
+    }
+    return false;
+}
+
+bool sendBehaviourAlert(const String& description, const String& riskLevel, const String& recommendation, double lat, double lon) {
+    // Use the format from requirements: ⚠ Behaviour Alert / Route deviation detected / Risk Level: / Recommendation: / Location: Lat/Long
+    if (telegramConfigured() && alertConfig.telegramEnabled) {
+        return telegramSendBehaviourAlert(description, riskLevel, recommendation, String(lat, 6), String(lon, 6));
+    }
+    return false;
+}
+
 bool sendGPSLossAlert(unsigned long durationMs, const String& location) {
     String msg = "GPS signal lost for " + String(durationMs / 1000) + " seconds";
     return triggerAlert(ALERT_GPS_LOSS, "GPS Signal Lost", msg, location, ALERT_PRIORITY_HIGH);
