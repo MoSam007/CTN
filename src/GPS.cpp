@@ -24,8 +24,8 @@ void initialiseGPS()
 
     Serial.println();
     Serial.println("Initialising GPS (NEO-6M)...");
-    Serial.println("RX Pin (ESP<-GPS): D7 (GPIO 13)");
-    Serial.println("TX Pin (ESP->GPS): D6 (GPIO 12)");
+    Serial.println("RX Pin (ESP<-GPS): D6 (GPIO 12)");
+    Serial.println("TX Pin (ESP->GPS): D7 (GPIO 13)");
     Serial.print("Baudrate: ");
     Serial.println(GPS_BAUDRATE);
     Serial.println("Waiting for satellite fix...");
