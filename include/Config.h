@@ -14,8 +14,8 @@
  */
 
 // GPS
-#define GPS_RX_PIN D6      // ESP8266 RX <- GPS TX  (Connect GPS TX to D6)
-#define GPS_TX_PIN D7      // ESP8266 TX -> GPS RX  (Connect GPS RX to D7, often unused)
+#define GPS_RX_PIN D7      // ESP8266 RX <- GPS TX  (Connect GPS TX to D6)
+#define GPS_TX_PIN D6      // ESP8266 TX -> GPS RX  (Connect GPS RX to D7, often unused)
 
 // Panic Button
 #define PANIC_BUTTON_PIN D5

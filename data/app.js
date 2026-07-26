@@ -786,7 +786,7 @@ const pageLoader = {
       // Telegram Settings
       this.updateTelegramUI(tgStatus);
 
-      $("#tg-save").onclick = async () => {
+      $("#btn-tg-save").onclick = async () => {
         const config = {
           botToken: $("#tg-bot-token").value.trim(),
           chatId: $("#tg-chat-id").value.trim(),
@@ -809,17 +809,17 @@ const pageLoader = {
         }
       };
 
-      $("#tg-test").onclick = async () => {
+      $("#btn-tg-test").onclick = async () => {
         try {
-          $("#tg-test").disabled = true;
-          $("#tg-test").textContent = "Sending...";
+          $("#btn-tg-test").disabled = true;
+          $("#btn-tg-test").textContent = "Sending...";
           await api.testTelegram();
           toast.success("Test message sent!");
         } catch (error) {
           toast.error("Test failed: " + error.message);
         } finally {
-          $("#tg-test").disabled = false;
-          $("#tg-test").innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Send Test Message`;
+          $("#btn-tg-test").disabled = false;
+          $("#btn-tg-test").innerHTML = `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg> Send Test Message`;
         }
       };
 
