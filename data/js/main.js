@@ -97,14 +97,14 @@ function connectWebSocket() {
 // Register Routes
 //--------------------------------------------------
 router
-    .add('/dashboard', (params, path) => { })
-    .add('/safe-locations', (params, path) => { })
-    .add('/behaviour', (params, path) => { })
-    .add('/wifi', (params, path) => { })
-    .add('/battery', (params, path) => { })
-    .add('/gps', (params, path) => { })
-    .add('/diagnostics', (params, path) => { })
-    .add('/settings', (params, path) => { });
+    .add('dashboard', (params, path) => { })
+    .add('safe-locations', (params, path) => { })
+    .add('behaviour', (params, path) => { })
+    .add('wifi', (params, path) => { })
+    .add('battery', (params, path) => { })
+    .add('gps', (params, path) => { })
+    .add('diagnostics', (params, path) => { })
+    .add('settings', (params, path) => { });
 
 //--------------------------------------------------
 // Route Guards - Initialize pages on navigation
