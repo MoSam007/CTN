@@ -442,6 +442,17 @@ void acknowledgeAlert(uint8_t index) {
     }
 }
 
+bool acknowledgeAndRemoveAlert(uint8_t index) {
+    if (index >= pendingAlertCount) return false;
+
+    // Shift remaining alerts down
+    for (uint8_t i = index; i < pendingAlertCount - 1; i++) {
+        pendingAlerts[i] = pendingAlerts[i + 1];
+    }
+    pendingAlertCount--;
+    return true;
+}
+
 void clearAcknowledgedAlerts() {
     uint8_t writeIdx = 0;
     for (uint8_t i = 0; i < pendingAlertCount; i++) {

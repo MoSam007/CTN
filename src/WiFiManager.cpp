@@ -118,25 +118,8 @@ void initialiseWiFi() {
 
 void serviceWiFi() {
     unsigned long now = millis();
-    
-    // Handle AP mode
-    if (apModeActive) {
-        extern void serviceWebDashboard();
-        serviceWebDashboard();
-        
-        // Periodic check to retry STA if networks saved
-        if (now - lastApFallbackCheck > 30000) {  // Every 30s
-            lastApFallbackCheck = now;
-            if (savedNetworkCount > 0) {
-                Serial.println("AP Mode: Retrying STA connection...");
-                stopAPMode();
-                initialiseWiFi();
-            }
-        }
-        return;
-    }
-    
-    // State machine for STA mode
+
+    // State machine for all modes
     switch (currentState) {
         case WIFI_STATE_INIT:
             if (savedNetworkCount > 0) connectToBestNetwork();
@@ -244,11 +227,28 @@ void serviceWiFi() {
                     scannedSecure[i] = (WiFi.encryptionType(i) != ENC_TYPE_NONE);
                 }
                 WiFi.scanDelete();
-                
+
                 if (WiFi.status() == WL_CONNECTED) {
                     setState(WIFI_STATE_CONNECTED);
                 } else {
                     setState(WIFI_STATE_INIT);
+                }
+            }
+            break;
+        }
+
+        case WIFI_STATE_AP_FALLBACK: {
+            // AP mode is active, service the web dashboard
+            extern void serviceWebDashboard();
+            serviceWebDashboard();
+
+            // Periodic check to retry STA if networks saved
+            if (now - lastApFallbackCheck > 30000) {  // Every 30s
+                lastApFallbackCheck = now;
+                if (savedNetworkCount > 0) {
+                    Serial.println("AP Mode: Retrying STA connection...");
+                    stopAPMode();
+                    initialiseWiFi();
                 }
             }
             break;
@@ -477,6 +477,14 @@ String getConnectionDiagostics() {
     }
 
     return diag;
+}
+
+//----------------------------------------------------
+// Connect to network - bool version (for simple use)
+//----------------------------------------------------
+bool connectToNetwork(const String& ssid, const String& password, uint16_t timeout) {
+    int result = connectToNetworkWithResult(ssid, password, timeout);
+    return result == WIFI_CONNECT_SUCCESS;
 }
 
 //----------------------------------------------------

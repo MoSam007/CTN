@@ -77,6 +77,11 @@ struct RoutePoint
 //--------------------------------------------------
 struct BehaviourConfig
 {
+    bool enabled;                     // Master enable
+    String sensitivity;               // "low", "medium", "high"
+    float maxWalkingSpeed;            // Max walking speed (km/h)
+    float runningSpeedThreshold;      // Speed considered "running" (km/h)
+
     // Learning parameters
     uint8_t minVisitsToLearn;       // Min visits to consider location "learned"
     float learningRate;             // How fast to adapt (0-1.0)
@@ -85,7 +90,6 @@ struct BehaviourConfig
     // Anomaly thresholds
     float maxDeviationDistance;     // Max meters from learned route
     unsigned long maxStopDuration;  // Max seconds stopped before anomaly
-    float runningSpeedThreshold;    // Speed considered "running" (km/h)
     float wanderingSpeedThreshold;  // Speed considered "wandering" (km/h)
     unsigned long nightStartHour;   // Hour when night starts (0-23)
     unsigned long nightEndHour;     // Hour when night ends (0-23)
@@ -106,9 +110,10 @@ struct BehaviourConfig
     bool enableNightMovementAlerts;
     bool enableRepeatedMovementAlerts;
 
-    BehaviourConfig() : minVisitsToLearn(3), learningRate(0.1), routeTimeout(300000),
+    BehaviourConfig() : enabled(true), sensitivity("medium"), maxWalkingSpeed(7.0), runningSpeedThreshold(12.0),
+                        minVisitsToLearn(3), learningRate(0.1), routeTimeout(300000),
                         maxDeviationDistance(50.0), maxStopDuration(300000),  // 5 min
-                        runningSpeedThreshold(10.0), wanderingSpeedThreshold(2.0),
+                        wanderingSpeedThreshold(2.0),
                         nightStartHour(22), nightEndHour(6),
                         maxRepeatedMovements(5),
                         watchThreshold(70), warningThreshold(50), emergencyThreshold(30),
@@ -179,11 +184,33 @@ bool saveBehaviourConfig(const BehaviourConfig& config);
 BehaviourConfig getBehaviourConfig();
 
 //--------------------------------------------------
+// Learned Locations
+//--------------------------------------------------
+bool isHomeLearned();
+bool isSchoolLearned();
+RoutePoint getHomeLocation();
+RoutePoint getSchoolLocation();
+
+//--------------------------------------------------
+// Learned Routes
+//--------------------------------------------------
+#define MAX_ROUTE_POINTS 50
+bool loadLearnedRoutes(RoutePoint* routes, uint8_t& count, uint8_t maxCount);
+
+//--------------------------------------------------
 // Manual Triggers (for testing)
 //--------------------------------------------------
 bool triggerTestAnomaly(AnomalyType type, const String& description);
 void simulateRouteDeviation();
 void simulateLongStop();
 void simulateRunning();
+
+//--------------------------------------------------
+// Demo Mode Injection API
+//--------------------------------------------------
+void behaviourInjectRiskScore(int riskScore);
+void behaviourInjectAnomaly(AnomalyType type);
+int behaviourGetRiskScore();
+void behaviourSetDemoMode(bool enabled);
 
 #endif // BEHAVIOUR_H

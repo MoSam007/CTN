@@ -2,7 +2,6 @@
 #define WEB_DASHBOARD_H
 
 #include <Arduino.h>
-#include <ESP8266WebServer.h>
 #include <ESP8266mDNS.h>
 #include <LittleFS.h>
 #include <ArduinoJson.h>
@@ -10,6 +9,8 @@
 #include <Battery.h>
 #include <GPS.h>
 #include <Diagnostics.h>
+#include <Behaviour.h>
+#include "WebSocket.h"
 
 //----------------------------------------------------
 // Web Dashboard Configuration
@@ -45,6 +46,52 @@ void handleAPIWiFiReconnect(); // POST /api/wifi/reconnect
 void handleAPIWiFiReorder();   // POST /api/wifi/reorder
 
 //----------------------------------------------------
+// REST API Endpoints - Safe Zones
+//----------------------------------------------------
+void handleAPISafeZonesGet();      // GET /api/safe-zones
+void handleAPISafeZonesPost();     // POST /api/safe-zones
+void handleAPISafeZonesPut();      // PUT /api/safe-zones/:index
+void handleAPISafeZonesDelete();   // DELETE /api/safe-zones/:index
+
+//----------------------------------------------------
+// REST API Endpoints - Behaviour
+//----------------------------------------------------
+void handleAPIBehaviourStatus();   // GET /api/behaviour/status
+void handleAPIBehaviourConfigGet(); // GET /api/behaviour/config
+void handleAPIBehaviourConfigPost(); // POST /api/behaviour/config
+void handleAPIBehaviourRoutes();   // GET /api/behaviour/routes
+
+//----------------------------------------------------
+// REST API Endpoints - Diagnostics
+//----------------------------------------------------
+void handleAPIDiagnosticsFull();   // GET /api/diagnostics/full
+
+//----------------------------------------------------
+// REST API Endpoints - Device Settings
+//----------------------------------------------------
+void handleAPIDeviceSettingsGet(); // GET /api/device/settings
+void handleAPIDeviceSettingsPost(); // POST /api/device/settings
+
+//----------------------------------------------------
+// REST API Endpoints - Alerts
+//----------------------------------------------------
+void handleAPIAlertsHistory();     // GET /api/alerts/history
+void handleAPIAlertsAcknowledge(); // POST /api/alerts/acknowledge
+
+//----------------------------------------------------
+// REST API Endpoints - OTA
+//----------------------------------------------------
+void handleAPIOTAStatus();         // GET /api/ota/status
+void handleAPIOTAUpdate();         // POST /api/ota/update
+
+//----------------------------------------------------
+// REST API Endpoints - Telegram Config
+//----------------------------------------------------
+void handleAPITelegramStatus();    // GET /api/telegram/status
+void handleAPITelegramSave();      // POST /api/telegram/save
+void handleAPITelegramTest();      // POST /api/telegram/test
+
+//----------------------------------------------------
 // REST API Endpoints - Device Control
 //----------------------------------------------------
 void handleAPIDeviceRestart();  // POST /api/device/restart
@@ -57,4 +104,3 @@ void serveDashboardFile(const String& path);
 void handleNotFound();
 
 #endif // WEB_DASHBOARD_H
-

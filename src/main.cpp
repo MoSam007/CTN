@@ -20,6 +20,7 @@
 #include "Battery.h"
 #include "Alerts.h"
 #include "WebDashboard.h"
+#include "WebSocket.h"
 
 //--------------------------------------------------------------
 // Timers
@@ -147,7 +148,10 @@ void setup()
 
     // Initialize WiFi (loads saved networks from Storage)
     initialiseWiFi();
-    
+
+    // Initialize WebSocket server - DISABLED for stability
+    // initWebSocket();
+
     // Web Dashboard starts in both STA and AP modes
     // initWebDashboard() is called by WiFiManager when connected
     // In AP mode it will be started by startAPMode()
@@ -168,6 +172,7 @@ void setup()
 void loop()
 {
     serviceWiFi();
+    // serviceWebSocket();  // Service WebSocket - DISABLED for stability
     updateGPS();
     checkPanicButton();
     serviceAlerts();

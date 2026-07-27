@@ -132,6 +132,7 @@ bool sendBehaviourAlert(const String& description, const String& riskLevel, cons
 uint8_t getPendingAlertCount();
 bool hasPendingAlerts();
 void acknowledgeAlert(uint8_t index);
+bool acknowledgeAndRemoveAlert(uint8_t index);
 void clearAcknowledgedAlerts();
 void clearAllAlerts();
 

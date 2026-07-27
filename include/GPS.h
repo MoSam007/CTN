@@ -30,6 +30,9 @@ double getSpeed();
 double getAltitude();
 double getCourse();
 
+// Demo Mode Injection
+void gpsInjectPosition(double lat, double lon, float speed, float course);
+
 uint32_t getSatelliteCount();
 double getHDOP();
 
@@ -59,5 +62,18 @@ unsigned long getGPSTimeSinceFix();   // Time since last valid fix
 unsigned long getGPSCharsProcessed(); // Total chars processed
 unsigned long getGPSSentencesWithFix(); // Valid sentences count
 unsigned long getGPSFailedChecksum(); // Failed checksum count
+
+//----------------------------------------------------
+// Demo Mode GPS Injection (for testing without hardware)
+//----------------------------------------------------
+void gpsInjectPosition(double lat, double lon, float speed, float course);
+bool gpsGetDemoMode();
+double gpsGetDemoLat();
+double gpsGetDemoLon();
+float gpsGetDemoSpeed();
+float gpsGetDemoCourse();
+uint32_t gpsGetDemoSatellites();
+double gpsGetDemoAltitude();
+double gpsGetDemoHDOP();
 
 #endif

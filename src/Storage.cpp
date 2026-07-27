@@ -392,16 +392,23 @@ bool updateSafeZone(uint8_t index, const SafeZone& zone) {
 bool removeSafeZone(uint8_t index) {
     SafeZone zones[MAX_SAFE_ZONES];
     uint8_t count = 0;
-    
+
     if (!loadSafeZones(zones, count, MAX_SAFE_ZONES)) return false;
     if (index >= count) return false;
-    
+
     for (uint8_t i = index; i < count - 1; i++) {
         zones[i] = zones[i + 1];
     }
     count--;
-    
+
     return saveSafeZones(zones, count);
+}
+
+uint8_t getSafeZoneCount() {
+    SafeZone zones[MAX_SAFE_ZONES];
+    uint8_t count = 0;
+    loadSafeZones(zones, count, MAX_SAFE_ZONES);
+    return count;
 }
 
 //======================================================================

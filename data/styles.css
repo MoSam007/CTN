@@ -394,6 +394,9 @@ ul, ol {
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   -ms-overflow-style: none;
+  /* Visual hint for scrollability on mobile */
+  mask-image: linear-gradient(to left, transparent, black 40px);
+  -webkit-mask-image: linear-gradient(to left, transparent, black 40px);
 }
 
 .nav::-webkit-scrollbar {
@@ -413,6 +416,9 @@ ul, ol {
   min-width: 64px;
   transition: all var(--transition-fast);
   white-space: nowrap;
+  /* Better touch targets on mobile */
+  min-height: 56px;
+  justify-content: center;
 }
 
 .nav-item:hover {
@@ -429,6 +435,24 @@ ul, ol {
   width: 22px;
   height: 22px;
   flex-shrink: 0;
+}
+
+/* Active indicator bar */
+.nav-item.active::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 24px;
+  height: 3px;
+  background: var(--color-primary);
+  border-radius: 0 0 var(--radius-sm) var(--radius-sm);
+}
+
+/* Position relative for ::after pseudo-element */
+.nav-item {
+  position: relative;
 }
 
 /* Main Content */

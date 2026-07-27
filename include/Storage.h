@@ -77,6 +77,12 @@ struct SafeZone {
 struct DeviceSettings {
     String deviceName;
     String fwVersion;
+    String ownerName;          // Owner/Parent name
+    String phoneNumber;        // Emergency contact
+    String timezone;           // Timezone string (e.g., "Africa/Nairobi")
+    String language;           // UI language (e.g., "en")
+    String units;              // "metric" or "imperial"
+    bool autoUpdate;           // Auto OTA update check
     float batteryCalibrationOffset;  // Voltage correction
     uint8_t gpsUpdateInterval;       // seconds
     uint8_t behaviourInterval;       // seconds
@@ -86,8 +92,10 @@ struct DeviceSettings {
     bool powerSaveMode;              // Enable power saving
     uint8_t cpuFrequency;            // 80 or 160 MHz
     bool debugMode;                  // Verbose serial output
-    
-    DeviceSettings() : deviceName("CTN-001"), fwVersion("1.0"), 
+
+    DeviceSettings() : deviceName("CTN-001"), fwVersion("1.0"),
+                       ownerName(""), phoneNumber(""), timezone("UTC"),
+                       language("en"), units("metric"), autoUpdate(false),
                        batteryCalibrationOffset(0.0), gpsUpdateInterval(1),
                        behaviourInterval(5), wifiScanInterval(60),
                        autoAPFallback(true), apFallbackTimeout(60),
@@ -102,8 +110,8 @@ struct BatteryCalibration {
     float dividerRatio;
     float adcReference;
     bool calibrated;
-    
-    BatteryCalibration() : dividerRatio(3.2), adcReference(3.3), calibrated(false) {
+
+    BatteryCalibration() : dividerRatio(3.2), adcReference(1.0), calibrated(false) {
         // Default Li-ion curve
         voltagePoints[0] = 3.30;   // 0%
         voltagePoints[1] = 3.40;   // 10%
@@ -170,6 +178,7 @@ bool saveSafeZones(const SafeZone* zones, uint8_t count);
 bool addSafeZone(const SafeZone& zone);
 bool updateSafeZone(uint8_t index, const SafeZone& zone);
 bool removeSafeZone(uint8_t index);
+uint8_t getSafeZoneCount();
 
 //----------------------------------------------------
 // Device Settings

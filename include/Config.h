@@ -111,11 +111,12 @@ sizeof(SAFE_ZONES)/sizeof(SAFE_ZONES[0]);
  * Battery
  *************************************************/
 
-// Voltage divider: 220k/100k = 3.2 ratio
-// ADC reference: 3.3V (NodeMCU onboard divider)
-// Vbatt = ADC * 3.3 / 1024 * 3.2 = ADC * 0.0103
+// Voltage divider on NodeMCU A0: 220k/100k = 3.2 ratio
+// ESP8266 ADC internal reference: 1.0V (NOT 3.3V!)
+// NodeMCU divider divides battery voltage by 3.2 before ADC
+// Vbatt = (raw / 1023) * 1.0V * 3.2 = raw * 0.003128
 
 #define BATTERY_DIVIDER_RATIO 3.2
-#define ADC_REFERENCE 3.3
+#define ADC_REFERENCE 1.0
 
 #endif // CONFIG_H

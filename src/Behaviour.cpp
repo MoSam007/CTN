@@ -79,6 +79,11 @@ static BehaviourConfig config;
 static bool configLoaded = false;
 
 //--------------------------------------------------
+// Demo Mode Injection (static storage)
+//--------------------------------------------------
+static bool _behaviourDemoMode = false;
+
+//--------------------------------------------------
 // Forward Declarations (Internal)
 //--------------------------------------------------
 static void loadConfiguration();
@@ -387,11 +392,9 @@ static void checkSafeZoneExit(double lat, double lon) {
     if (!loadSafeZones(zones, zoneCount, MAX_SAFE_ZONES)) return;
 
     static bool wasInZone[MAX_SAFE_ZONES] = {false};
-    bool anyZone = false;
 
     for (uint8_t i = 0; i < zoneCount; i++) {
         if (!zones[i].enabled) continue;
-        anyZone = true;
         double dist = haversineDist(lat, lon, zones[i].latitude, zones[i].longitude);
         bool nowInZone = (dist <= zones[i].radius);
 
@@ -1103,4 +1106,103 @@ void simulateLongStop() {
 
 void simulateRunning() {
     triggerTestAnomaly(ANOMALY_RUNNING, "Simulated running - 15 km/h detected");
+}
+
+//----------------------------------------------------
+// Demo Mode Injection API
+//----------------------------------------------------
+
+void behaviourInjectRiskScore(int score) {
+    riskScore = constrain(score, 0, 100);
+    if (_behaviourDemoMode) {
+        LOG_DEBUG(LogModule::BEHAV, "Demo inject risk score: %d", riskScore);
+    }
+}
+
+void behaviourInjectAnomaly(AnomalyType type) {
+    if (!_behaviourDemoMode) return;
+
+    AnomalyEvent event;
+    event.type = type;
+    event.confidence = 85;
+    event.latitude = getLatitude();
+    event.longitude = getLongitude();
+    event.timestamp = millis();
+    event.speed = getSpeed();
+
+    switch (type) {
+        case ANOMALY_ROUTE_DEVIATION:
+            event.description = "Route deviation detected (demo)";
+            break;
+        case ANOMALY_LONG_STOP:
+            event.description = "Extended stop detected (demo)";
+            event.duration = 300000;
+            break;
+        case ANOMALY_RUNNING:
+            event.description = "Running detected (demo)";
+            break;
+        case ANOMALY_WANDERING:
+            event.description = "Wandering detected (demo)";
+            break;
+        case ANOMALY_LEAVING_SCHOOL_UNEXPECTEDLY:
+            event.description = "Left school unexpectedly (demo)";
+            break;
+        case ANOMALY_LEAVING_SAFE_ZONE:
+            event.description = "Left safe zone (demo)";
+            break;
+        case ANOMALY_NIGHT_MOVEMENT:
+            event.description = "Night movement detected (demo)";
+            break;
+        case ANOMALY_SUSPICIOUS_REPEATED_MOVEMENT:
+            event.description = "Suspicious repeated movement (demo)";
+            break;
+        case ANOMALY_UNEXPECTED_MOVEMENT:
+            event.description = "Unexpected movement (demo)";
+            break;
+        default:
+            event.description = "Anomaly detected (demo)";
+            break;
+    }
+
+    addAnomalyEvent(event);
+    LOG_INFO(LogModule::BEHAV, "Demo anomaly injected: %s", event.description.c_str());
+}
+
+int behaviourGetRiskScore() {
+    return riskScore;
+}
+
+void behaviourSetDemoMode(bool enabled) {
+    _behaviourDemoMode = enabled;
+    LOG_INFO(LogModule::BEHAV, "Demo mode %s", enabled ? "ENABLED" : "DISABLED");
+}
+
+//--------------------------------------------------
+// Missing Getters (for API compatibility)
+//--------------------------------------------------
+
+bool isHomeLearned() {
+    return homeLearned;
+}
+
+bool isSchoolLearned() {
+    return schoolLearned;
+}
+
+RoutePoint getHomeLocation() {
+    return homeLocation;
+}
+
+RoutePoint getSchoolLocation() {
+    return schoolLocation;
+}
+
+bool loadLearnedRoutes(RoutePoint* routes, uint8_t& count, uint8_t maxCount) {
+    if (!routes || maxCount == 0) return false;
+
+    count = min(routePointCount, maxCount);
+    for (uint8_t i = 0; i < count; i++) {
+        routes[i] = learnedRoutes[i];
+    }
+    return count > 0;
 }

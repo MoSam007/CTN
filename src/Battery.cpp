@@ -5,6 +5,9 @@
 #include "Telegram.h"
 #include "Storage.h"
 
+// When battery simulator is enabled, it provides the API implementations
+#if !defined(CTN_BATTERY_SIMULATOR) || !CTN_BATTERY_SIMULATOR
+
 static float batteryVoltage = 0;
 static int batteryPercentage = 100;
 static BatteryState batteryState = BATTERY_FULL;
@@ -52,11 +55,10 @@ void updateBattery()
         else batteryPercentage = 0;
     }
 
-    if (batteryPercentage >= 80) batteryState = BATTERY_FULL;
-    else if (batteryPercentage >= 60) batteryState = BATTERY_GOOD;
-    else if (batteryPercentage >= 40) batteryState = BATTERY_NORMAL;
-    else if (batteryPercentage >= 20) batteryState = BATTERY_LOW;
-    else batteryState = BATTERY_CRITICAL;
+    // Map percentage to BatteryState (DISCHARGING/CHARGING/FULL/UNKNOWN)
+    if (batteryPercentage >= 95) batteryState = BATTERY_FULL;
+    else if (batteryPercentage > 0) batteryState = BATTERY_DISCHARGING;
+    else batteryState = BATTERY_UNKNOWN;
 
     if (batteryLow() && !lowAlertSent) {
         sendInformation("🔋 Battery Low\nLevel: " + String(batteryPercentage) + "%\nVoltage: " + String(batteryVoltage, 2) + "V");
@@ -87,11 +89,10 @@ bool batteryCritical() { return batteryPercentage < 10; }
 
 String batteryStateToString(BatteryState state) {
     switch(state) {
+        case BATTERY_DISCHARGING: return "DISCHARGING";
+        case BATTERY_CHARGING: return "CHARGING";
         case BATTERY_FULL: return "FULL";
-        case BATTERY_GOOD: return "GOOD";
-        case BATTERY_NORMAL: return "NORMAL";
-        case BATTERY_LOW: return "LOW";
-        case BATTERY_CRITICAL: return "CRITICAL";
+        case BATTERY_UNKNOWN: return "UNKNOWN";
     }
     return "UNKNOWN";
 }
@@ -102,3 +103,22 @@ void printBatteryStatus() {
     Serial.print("Level   : "); Serial.println(formatPercentage(batteryPercentage));
     Serial.print("State   : "); Serial.println(batteryStateToString(batteryState));
 }
+
+bool isBatteryCharging() {
+    // Real implementation would check charging pin or current direction
+    // For now, estimate based on voltage trend
+    return false;
+}
+
+float getBatteryRuntimeEstimate() {
+    if (batteryPercentage <= 0) return 0;
+    // Rough estimate: 20 hours at 100%, linear scaling
+    return (batteryPercentage / 100.0f) * 20.0f;
+}
+
+BatteryHealth getBatteryHealth() {
+    // Real implementation would track charge cycles, capacity fade
+    return BATTERY_HEALTH_GOOD; // New battery
+}
+
+#endif // !CTN_BATTERY_SIMULATOR

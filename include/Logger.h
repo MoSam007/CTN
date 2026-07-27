@@ -80,6 +80,7 @@ namespace LogModule {
     constexpr const char* WEB       = "WEB";
     constexpr const char* DIAG      = "DIAG";
     constexpr const char* UTIL      = "UTIL";
+    constexpr const char* DEMO      = "DEMO";
 }
 
 //----------------------------------------------------

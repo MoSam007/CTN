@@ -16,6 +16,18 @@ static unsigned long gpsStatsLastPrint = 0;
 static bool gpsHardwareOK = false;
 
 //----------------------------------------------------
+// Demo Mode GPS Injection (static storage)
+//----------------------------------------------------
+static bool _gpsDemoMode = false;
+static double _gpsDemoLat = 0;
+static double _gpsDemoLon = 0;
+static float _gpsDemoSpeed = 0;
+static float _gpsDemoCourse = 0;
+static uint32_t _gpsDemoSatellites = 8;
+static double _gpsDemoAltitude = 1500.0;
+static double _gpsDemoHDOP = 1.0;
+
+//----------------------------------------------------
 // Initialise GPS
 //----------------------------------------------------
 void initialiseGPS()
@@ -87,6 +99,9 @@ void updateGPS()
 
 double getLatitude()
 {
+    if (_gpsDemoMode)
+        return _gpsDemoLat;
+
     if (gps.location.isValid())
         return gps.location.lat();
 
@@ -95,6 +110,9 @@ double getLatitude()
 
 double getLongitude()
 {
+    if (_gpsDemoMode)
+        return _gpsDemoLon;
+
     if (gps.location.isValid())
         return gps.location.lng();
 
@@ -103,6 +121,9 @@ double getLongitude()
 
 double getSpeed()
 {
+    if (_gpsDemoMode)
+        return _gpsDemoSpeed;
+
     if (gps.speed.isValid())
         return gps.speed.kmph();
 
@@ -111,6 +132,9 @@ double getSpeed()
 
 double getAltitude()
 {
+    if (_gpsDemoMode)
+        return _gpsDemoAltitude;
+
     if (gps.altitude.isValid())
         return gps.altitude.meters();
 
@@ -119,14 +143,71 @@ double getAltitude()
 
 double getCourse()
 {
+    if (_gpsDemoMode)
+        return _gpsDemoCourse;
+
     if (gps.course.isValid())
         return gps.course.deg();
 
     return 0.0;
 }
 
+//----------------------------------------------------
+// Demo Mode Injection
+//----------------------------------------------------
+
+void gpsInjectPosition(double lat, double lon, float speed, float course)
+{
+    _gpsDemoMode = true;
+    _gpsDemoLat = lat;
+    _gpsDemoLon = lon;
+    _gpsDemoSpeed = speed;
+    _gpsDemoCourse = course;
+
+    LOG_DEBUG(LogModule::GPS, "Demo GPS injected: lat=%.6f, lon=%.6f, speed=%.1f, course=%.1f", lat, lon, speed, course);
+}
+
+bool gpsGetDemoMode() {
+    return _gpsDemoMode;
+}
+
+double gpsGetDemoLat() {
+    return _gpsDemoLat;
+}
+
+double gpsGetDemoLon() {
+    return _gpsDemoLon;
+}
+
+float gpsGetDemoSpeed() {
+    return _gpsDemoSpeed;
+}
+
+float gpsGetDemoCourse() {
+    return _gpsDemoCourse;
+}
+
+uint32_t gpsGetDemoSatellites() {
+    return _gpsDemoSatellites;
+}
+
+double gpsGetDemoAltitude() {
+    return _gpsDemoAltitude;
+}
+
+double gpsGetDemoHDOP() {
+    return _gpsDemoHDOP;
+}
+
+//----------------------------------------------------
+// GPS Health Check (updated for demo mode)
+//----------------------------------------------------
+
 uint32_t getSatelliteCount()
 {
+    if (_gpsDemoMode)
+        return _gpsDemoSatellites;
+
     if (gps.satellites.isValid())
         return gps.satellites.value();
 
@@ -135,6 +216,9 @@ uint32_t getSatelliteCount()
 
 double getHDOP()
 {
+    if (_gpsDemoMode)
+        return _gpsDemoHDOP;
+
     if (gps.hdop.isValid())
         return gps.hdop.hdop();
 
@@ -143,16 +227,25 @@ double getHDOP()
 
 bool gpsHasFix()
 {
+    if (_gpsDemoMode)
+        return true;
+
     return gps.location.isValid();
 }
 
 bool gpsLocationValid()
 {
+    if (_gpsDemoMode)
+        return true;
+
     return gps.location.isValid();
 }
 
 bool gpsTimeValid()
 {
+    if (_gpsDemoMode)
+        return true;
+
     return gps.time.isValid();
 }
 
