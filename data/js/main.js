@@ -97,6 +97,7 @@ function connectWebSocket() {
 // Register Routes
 //--------------------------------------------------
 router
+    .add('', (params, path) => { location.hash = 'dashboard'; })  // Empty hash -> dashboard (fires hashchange)
     .add('dashboard', (params, path) => { })
     .add('safe-locations', (params, path) => { })
     .add('behaviour', (params, path) => { })
