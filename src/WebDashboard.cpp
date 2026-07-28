@@ -1169,8 +1169,8 @@ void handleAPIDemoModePost() {
 
     bool enabled = doc["enabled"] | false;
     if (enabled) {
-        // Start demo mode with default scenario
-        demoModeSetScenarioByName("idle");
+        // Start demo mode with idle scenario
+        demoModeSetScenario(DEMO_IDLE);
     } else {
         demoModeStop();
     }

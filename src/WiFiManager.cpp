@@ -81,7 +81,7 @@ void initialiseWiFi() {
     Serial.println("====================================");
     Serial.println(" WiFi Manager Initialising");
     Serial.println("====================================");
-    
+
     // Mount LittleFS and load saved networks
     if (loadSavedNetworks()) {
         Serial.print("Loaded ");
@@ -90,25 +90,36 @@ void initialiseWiFi() {
     } else {
         Serial.println("No saved networks found");
     }
-    
-    // Set WiFi mode
-    WiFi.mode(WIFI_STA);
+
+    // Set WiFi mode to AP+STA - AP always active at 192.168.4.1
+    WiFi.mode(WIFI_AP_STA);
     WiFi.hostname(DEVICE_NAME);
     WiFi.setSleepMode(WIFI_NONE_SLEEP);
     WiFi.setAutoReconnect(false);
-    
-    // Try to connect to best network
+
+    // Start AP mode with fixed IP 192.168.4.1 - always active as primary dashboard
+    WiFi.softAPConfig(AP_IP, AP_GATEWAY, AP_SUBNET);
+    bool apResult = WiFi.softAP(AP_MODE_SSID, AP_PASSWORD);
+    if (apResult) {
+        apModeActive = true;
+        Serial.println();
+        Serial.println("AP Mode Active (Primary Dashboard)");
+        Serial.print("AP SSID: "); Serial.println(AP_MODE_SSID);
+        Serial.print("AP IP: "); Serial.println(WiFi.softAPIP());
+    } else {
+        Serial.println("Failed to start AP mode!");
+    }
+
+    // Initialize web dashboard on AP IP (always available at 192.168.4.1)
+    extern void initWebDashboard();
+    initWebDashboard();
+
+    // Try to connect to best network (in background, AP stays active)
     if (savedNetworkCount > 0 && connectToBestNetwork()) {
         setState(WIFI_STATE_CONNECTING);
     } else {
-        // No networks or all failed - start AP fallback
-        DeviceSettings settings;
-        if (loadDeviceSettings(settings) && settings.autoAPFallback) {
-            Serial.println("Starting AP Mode for setup...");
-            startAPMode();
-        } else {
-            setState(WIFI_STATE_FAILED);
-        }
+        // No networks saved - stay in AP mode for setup
+        setState(WIFI_STATE_AP_FALLBACK);
     }
 }
 
@@ -124,7 +135,7 @@ void serviceWiFi() {
         case WIFI_STATE_INIT:
             if (savedNetworkCount > 0) connectToBestNetwork();
             break;
-            
+
         case WIFI_STATE_CONNECTING: {
             if (WiFi.status() == WL_CONNECTED) {
                 setState(WIFI_STATE_CONNECTED);
@@ -133,40 +144,35 @@ void serviceWiFi() {
                 Serial.print("SSID: "); Serial.println(WiFi.SSID());
                 Serial.print("IP: "); Serial.println(WiFi.localIP());
                 Serial.print("RSSI: "); Serial.print(WiFi.RSSI()); Serial.println(" dBm");
-                
+                Serial.println("AP Dashboard still active at 192.168.4.1");
+
                 if (currentNetworkIndex >= 0 && currentNetworkIndex < savedNetworkCount) {
                     savedNetworks[currentNetworkIndex].lastConnected = now;
                     savedNetworks[currentNetworkIndex].failCount = 0;
                     saveWiFiNetworks(savedNetworks, savedNetworkCount);
                 }
 
-                extern void initWebDashboard();
-                initWebDashboard();
                 lastBackgroundScan = now;
             }
             else if (now - stateStartTime > WIFI_CONNECT_TIMEOUT) {
                 Serial.println();
                 Serial.println("Connection timeout");
                 WiFi.disconnect();
-                
+
                 if (currentNetworkIndex >= 0 && currentNetworkIndex < savedNetworkCount) {
                     savedNetworks[currentNetworkIndex].failCount++;
                     saveWiFiNetworks(savedNetworks, savedNetworkCount);
                 }
-                
+
                 if (!connectToBestNetwork()) {
-                    DeviceSettings settings;
-                    if (loadDeviceSettings(settings) && settings.autoAPFallback) {
-                        Serial.println("All networks failed - starting AP fallback");
-                        startAPMode();
-                    } else {
-                        setState(WIFI_STATE_FAILED);
-                    }
+                    // Stay in AP mode - AP is always active anyway
+                    Serial.println("All networks failed - staying in AP mode");
+                    setState(WIFI_STATE_AP_FALLBACK);
                 }
             }
             break;
         }
-        
+
         case WIFI_STATE_CONNECTED: {
             if (WiFi.status() != WL_CONNECTED) {
                 Serial.println();
@@ -174,39 +180,35 @@ void serviceWiFi() {
                 setState(WIFI_STATE_RECONNECTING);
                 lastReconnectAttempt = now;
             }
-            
+
             // Background scanning
             if (backgroundScanEnabled && now - lastBackgroundScan > WIFI_BACKGROUND_SCAN_INTERVAL) {
                 lastBackgroundScan = now;
                 triggerBackgroundScan();
             }
-            
+
             extern void serviceWebDashboard();
             serviceWebDashboard();
             break;
         }
-        
+
         case WIFI_STATE_RECONNECTING: {
             if (now - lastReconnectAttempt < WIFI_RETRY_INTERVAL) break;
-            
+
             lastReconnectAttempt = now;
             Serial.println("Attempting reconnection...");
-            
+
             if (currentNetworkIndex >= 0 && currentNetworkIndex < savedNetworkCount) {
-                WiFi.begin(savedNetworks[currentNetworkIndex].ssid.c_str(), 
+                WiFi.begin(savedNetworks[currentNetworkIndex].ssid.c_str(),
                           savedNetworks[currentNetworkIndex].password.c_str());
                 setState(WIFI_STATE_CONNECTING);
             } else if (!connectToBestNetwork()) {
-                DeviceSettings settings;
-                if (loadDeviceSettings(settings) && settings.autoAPFallback) {
-                    startAPMode();
-                } else {
-                    setState(WIFI_STATE_FAILED);
-                }
+                // Stay in AP mode - AP is always active
+                setState(WIFI_STATE_AP_FALLBACK);
             }
             break;
         }
-        
+
         case WIFI_STATE_FAILED: {
             if (now - stateStartTime > 60000) {
                 stateStartTime = now;
@@ -216,7 +218,7 @@ void serviceWiFi() {
             }
             break;
         }
-        
+
         case WIFI_STATE_SCANNING: {
             int n = WiFi.scanComplete();
             if (n >= 0) {
@@ -238,7 +240,7 @@ void serviceWiFi() {
         }
 
         case WIFI_STATE_AP_FALLBACK: {
-            // AP mode is active, service the web dashboard
+            // AP mode is always active, service the web dashboard
             extern void serviceWebDashboard();
             serviceWebDashboard();
 
@@ -247,8 +249,9 @@ void serviceWiFi() {
                 lastApFallbackCheck = now;
                 if (savedNetworkCount > 0) {
                     Serial.println("AP Mode: Retrying STA connection...");
-                    stopAPMode();
-                    initialiseWiFi();
+                    if (connectToBestNetwork()) {
+                        setState(WIFI_STATE_CONNECTING);
+                    }
                 }
             }
             break;

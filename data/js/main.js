@@ -10,13 +10,13 @@ import { initMap, addSafeZone, clearSafeZones, centerMap } from './components/ma
 import { RadialGauge, LinearGauge } from './components/gauge.js';
 import { Timeline } from './components/timeline.js';
 import { ZoneEditor } from './components/zone-editor.js';
-import { initDashboard } from './pages/dashboard.js';
-import { initSafeLocations } from './pages/safe-locations.js';
-import { initBehaviour } from './pages/behaviour.js';
-import { initWiFi } from './pages/wifi.js';
-import { initDiagnostics } from './pages/diagnostics.js';
-import { initSettings } from './pages/settings.js';
-import { DemoMode } from './demo.js';
+import { initDashboardPage } from './pages/dashboard.js';
+import { initSafeLocationsPage } from './pages/safe-locations.js';
+import { initBehaviourPage } from './pages/behaviour.js';
+import { initWifiPage } from './pages/wifi.js';
+import { initDiagnosticsPage } from './pages/diagnostics.js';
+import { initSettingsPage } from './pages/settings.js';
+import { initDemoMode } from './demo.js';
 
 //--------------------------------------------------
 // Global Components & State
@@ -29,12 +29,12 @@ let activeTimelines = new Map();
 // Page Initialization Mapping
 //--------------------------------------------------
 const pageInitializers = {
-    'dashboard': initDashboard,
-    'safe-locations': initSafeLocations,
-    'behaviour': initBehaviour,
-    'wifi': initWiFi,
-    'diagnostics': initDiagnostics,
-    'settings': initSettings
+    'dashboard': initDashboardPage,
+    'safe-locations': initSafeLocationsPage,
+    'behaviour': initBehaviourPage,
+    'wifi': initWifiPage,
+    'diagnostics': initDiagnosticsPage,
+    'settings': initSettingsPage
 };
 
 //--------------------------------------------------
@@ -97,7 +97,7 @@ function connectWebSocket() {
 // Register Routes
 //--------------------------------------------------
 router
-    .add('', (params, path) => { location.hash = 'dashboard'; })  // Empty hash -> dashboard (fires hashchange)
+    .add('/', (params, path) => { location.hash = 'dashboard'; })  // Empty hash -> dashboard (fires hashchange)
     .add('dashboard', (params, path) => { })
     .add('safe-locations', (params, path) => { })
     .add('behaviour', (params, path) => { })
@@ -214,7 +214,7 @@ async function init() {
     console.log('CTN Dashboard v2 initializing...');
 
     // Initialize DemoMode (loads from localStorage)
-    DemoMode.init();
+    initDemoMode();
 
     // Sync demo mode state
     State.demoMode.value = api.demoMode;
