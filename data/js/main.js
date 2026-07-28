@@ -231,6 +231,16 @@ async function init() {
     const savedTheme = localStorage.getItem('ctn-theme') || 'light';
     document.documentElement.classList.add(savedTheme);
 
+    // Theme toggle handler
+    const themeToggle = document.getElementById('theme-toggle');
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const isDark = document.documentElement.classList.toggle('dark');
+            document.documentElement.classList.toggle('light', !isDark);
+            localStorage.setItem('ctn-theme', isDark ? 'dark' : 'light');
+        });
+    }
+
     // Initial route
     router._handleHashChange();
 
