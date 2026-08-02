@@ -99,21 +99,88 @@ String getContentType(const String& path) {
     return "text/plain";
 }
 
+void listLittleFSFilesRecursive(const char* path, int indent, size_t& totalSize, int& fileCount, bool isFirstCall) {
+    Dir dir = LittleFS.openDir(path);
+    while (dir.next()) {
+        for (int i = 0; i < indent; i++) Serial.print("  ");
+
+        // Get the full path for this entry
+        String entryPath = dir.fileName();
+
+        File file = dir.openFile("r");
+        bool isDir = file.isDirectory();
+        size_t fileSize = file.size();
+        Serial.printf("%s%s (%u bytes)%s\n", indent > 0 ? "  " : "", entryPath.c_str(), fileSize, isDir ? " [DIR]" : "");
+        totalSize += fileSize;
+        file.close();
+        fileCount++;
+
+        if (isDir) {
+            // Recursively list subdirectory using the full path
+            listLittleFSFilesRecursive(entryPath.c_str(), indent + 1, totalSize, fileCount, false);
+        }
+    }
+}
+
+void listLittleFSFiles() {
+    Serial.println("\n=== LittleFS File Listing ===");
+    size_t totalSize = 0;
+    int fileCount = 0;
+    listLittleFSFilesRecursive("/", 0, totalSize, fileCount, true);
+    Serial.printf("Total files: %d, Total size: %d bytes (%.1f KB)\n\n", fileCount, totalSize, totalSize / 1024.0);
+}
+
 bool handleFileRead(const String& path) {
     String filePath = path;
     if (filePath == "/") filePath = "/index.html";
 
-    if (!LittleFS.exists(filePath)) {
+    Serial.printf("[WebDash] handleFileRead: requested path='%s', filePath='%s'\n", path.c_str(), filePath.c_str());
+    bool exists = LittleFS.exists(filePath);
+    Serial.printf("[WebDash] LittleFS.exists('%s') = %s\n", filePath.c_str(), exists ? "true" : "false");
+
+    if (!exists) {
+        Serial.printf("[WebDash] FILE NOT FOUND in LittleFS: %s\n", filePath.c_str());
         return false;
     }
 
     File file = LittleFS.open(filePath, "r");
     if (!file) {
+        Serial.printf("[WebDash] FAILED to open file: %s\n", filePath.c_str());
         return false;
     }
 
-    server.streamFile(file, getContentType(filePath));
+    size_t fileSize = file.size();
+    const char* contentType = getContentType(filePath).c_str();
+    Serial.printf("[WebDash] Opening file: %s (%u bytes, type: %s)\n", filePath.c_str(), fileSize, contentType);
+
+    // Send headers manually to ensure Content-Length is correct
+    server.sendHeader("Content-Length", String(fileSize));
+    server.sendHeader("Cache-Control", "public, max-age=31536000");
+    server.send(200, contentType, "");  // Send headers only (empty body)
+
+    // Stream file in chunks to avoid OOM and ensure exact byte count
+    const size_t CHUNK_SIZE = 1024;
+    uint8_t buffer[CHUNK_SIZE];
+    size_t totalSent = 0;
+    size_t bytesRead;
+
+    while ((bytesRead = file.read(buffer, CHUNK_SIZE)) > 0) {
+        // Use sendContent which doesn't add any framing - just raw bytes
+        // Note: sendContent returns void, assume all bytes sent or connection fails
+        server.sendContent((const char*)buffer, bytesRead);
+        totalSent += bytesRead;
+        yield();  // Allow WiFi stack to process
+    }
+
     file.close();
+
+    Serial.printf("[WebDash] Transmission complete: %s (%u bytes sent, expected %u)\n", filePath.c_str(), totalSent, fileSize);
+
+    if (totalSent != fileSize) {
+        Serial.printf("[WebDash] ERROR: Byte count mismatch! Sent %u, expected %u\n", totalSent, fileSize);
+        return false;
+    }
+
     return true;
 }
 
@@ -1343,8 +1410,256 @@ void initWebDashboard() {
     server.on("/", ESP8266HTTPMethod::HTTP_GET, []() { serveDashboardFile("/index.html"); });
     server.onNotFound(handleNotFound);
 
+    // Test endpoint for LittleFS deep file access
+    server.on("/api/test/fs", ESP8266HTTPMethod::HTTP_GET, []() {
+        JsonDocument doc;
+        JsonArray results = doc["results"].to<JsonArray>();
+
+        const char* testFiles[] = {
+            "/js/main.js",
+            "/js/router.js",
+            "/js/state.js",
+            "/js/api.js",
+            "/js/demo.js",
+            "/js/pages/dashboard.js",
+            "/js/pages/behaviour.js",
+            "/js/pages/wifi.js",
+            "/js/pages/diagnostics.js",
+            "/js/pages/safe-locations.js",
+            "/js/pages/settings.js",
+            "/js/components/gauge.js",
+            "/js/components/map.js",
+            "/js/components/timeline.js",
+            "/js/components/zone-editor.js"
+        };
+
+        for (const char* path : testFiles) {
+            bool exists = LittleFS.exists(path);
+            File file = LittleFS.open(path, "r");
+            bool openOk = file;
+            size_t size = file ? file.size() : 0;
+            size_t bytesRead = 0;
+            uint8_t readBuf[256];
+
+            // Actually read the entire file to verify it's readable
+            if (file) {
+                while (file.read(readBuf, sizeof(readBuf)) > 0) {
+                    bytesRead += sizeof(readBuf);
+                }
+                // Read remaining
+                size_t rem = file.read(readBuf, sizeof(readBuf));
+                bytesRead += rem;
+                file.close();
+            }
+
+            JsonObject result = results.add<JsonObject>();
+            result["path"] = path;
+            result["exists"] = exists;
+            result["open_ok"] = openOk;
+            result["size"] = size;
+            result["bytes_readable"] = bytesRead;
+            result["read_match"] = (bytesRead == size);
+
+            Serial.printf("[FS Test] %s: exists=%s, open=%s, size=%d, readable=%d, match=%s\n",
+                path, exists ? "yes" : "no", openOk ? "yes" : "no", size, bytesRead, (bytesRead == size) ? "yes" : "NO!");
+        }
+
+        sendJSONResponse(200, doc);
+    });
+
+    // Dedicated component files verification endpoint
+    server.on("/api/test/components", ESP8266HTTPMethod::HTTP_GET, []() {
+        JsonDocument doc;
+        JsonArray results = doc["results"].to<JsonArray>();
+
+        const char* componentFiles[] = {
+            "/js/components/map.js",
+            "/js/components/gauge.js",
+            "/js/components/timeline.js",
+            "/js/components/zone-editor.js"
+        };
+
+        Serial.println("\n=== Component File Deep Verification ===");
+        for (const char* path : componentFiles) {
+            bool exists = LittleFS.exists(path);
+            File file = LittleFS.open(path, "r");
+            bool openOk = file;
+            size_t size = file ? file.size() : 0;
+            size_t bytesRead = 0;
+            uint8_t readBuf[256];
+
+            if (file) {
+                while (file.read(readBuf, sizeof(readBuf)) > 0) {
+                    bytesRead += sizeof(readBuf);
+                }
+                size_t rem = file.read(readBuf, sizeof(readBuf));
+                bytesRead += rem;
+                file.close();
+            }
+
+            bool readMatch = (bytesRead == size);
+
+            JsonObject result = results.add<JsonObject>();
+            result["path"] = path;
+            result["exists"] = exists;
+            result["open_ok"] = openOk;
+            result["size"] = size;
+            result["bytes_readable"] = bytesRead;
+            result["read_match"] = readMatch;
+
+            Serial.printf("[Component] %s: exists=%s, open=%s, size=%u, readable=%u, match=%s\n",
+                path, exists ? "YES" : "NO", openOk ? "YES" : "NO", size, bytesRead, readMatch ? "YES" : "MISMATCH!");
+
+            // If file exists and readable, also do a test stream like handleFileRead would
+            if (exists && openOk && readMatch) {
+                File streamFile = LittleFS.open(path, "r");
+                if (streamFile) {
+                    uint8_t streamBuf[1024];
+                    size_t streamTotal = 0;
+                    while (streamFile.read(streamBuf, sizeof(streamBuf)) > 0) {
+                        streamTotal += sizeof(streamBuf);
+                    }
+                    size_t rem = streamFile.read(streamBuf, sizeof(streamBuf));
+                    streamTotal += rem;
+                    streamFile.close();
+                    Serial.printf("[Component] %s: stream test read %u bytes (expected %u) %s\n",
+                        path, streamTotal, size, (streamTotal == size) ? "OK" : "MISMATCH!");
+                }
+            }
+        }
+
+        // Also verify api.js
+        Serial.println("\n=== api.js Deep Verification ===");
+        const char* apiPath = "/js/api.js";
+        bool exists = LittleFS.exists(apiPath);
+        File file = LittleFS.open(apiPath, "r");
+        bool openOk = file;
+        size_t size = file ? file.size() : 0;
+        size_t bytesRead = 0;
+        uint8_t readBuf[256];
+
+        if (file) {
+            while (file.read(readBuf, sizeof(readBuf)) > 0) {
+                bytesRead += sizeof(readBuf);
+            }
+            size_t rem = file.read(readBuf, sizeof(readBuf));
+            bytesRead += rem;
+            file.close();
+        }
+
+        bool readMatch = (bytesRead == size);
+
+        JsonObject apiResult = results.add<JsonObject>();
+        apiResult["path"] = apiPath;
+        apiResult["exists"] = exists;
+        apiResult["open_ok"] = openOk;
+        apiResult["size"] = size;
+        apiResult["bytes_readable"] = bytesRead;
+        apiResult["read_match"] = readMatch;
+
+        Serial.printf("[api.js] %s: exists=%s, open=%s, size=%u, readable=%u, match=%s\n",
+            apiPath, exists ? "YES" : "NO", openOk ? "YES" : "NO", size, bytesRead, readMatch ? "YES" : "MISMATCH!");
+
+        sendJSONResponse(200, doc);
+    });
+
     server.begin();
     webDashboardRunning = true;
+
+    // List all files in LittleFS for debugging
+    listLittleFSFiles();
+
+    // Diagnostic: Explicitly check component files in nested /js/components/ directory
+    Serial.println("\n=== Component File Deep Verification ===");
+    const char* componentFiles[] = {
+        "/js/components/map.js",
+        "/js/components/gauge.js",
+        "/js/components/timeline.js",
+        "/js/components/zone-editor.js"
+    };
+    for (const auto* path : componentFiles) {
+        bool exists = LittleFS.exists(path);
+        File f = LittleFS.open(path, "r");
+        bool openOk = f;
+        size_t sz = f ? f.size() : 0;
+        size_t bytesRead = 0;
+        uint8_t buf[256];
+
+        if (f) {
+            while (f.read(buf, sizeof(buf)) > 0) {
+                bytesRead += sizeof(buf);
+            }
+            size_t rem = f.read(buf, sizeof(buf));
+            bytesRead += rem;
+            f.close();
+        }
+
+        bool readMatch = (bytesRead == sz);
+        Serial.printf("%s : exists=%s, open=%s, size=%u, readable=%u, match=%s\n",
+            path, exists ? "YES" : "NO", openOk ? "YES" : "NO", sz, bytesRead, readMatch ? "YES" : "MISMATCH!");
+    }
+
+    // Diagnostic: Check api.js specifically
+    Serial.println("\n=== api.js Deep Verification ===");
+    if (LittleFS.exists("/js/api.js")) {
+        File f = LittleFS.open("/js/api.js", "r");
+        size_t sz = f ? f.size() : 0;
+        size_t bytesRead = 0;
+        uint8_t buf[256];
+
+        if (f) {
+            while (f.read(buf, sizeof(buf)) > 0) {
+                bytesRead += sizeof(buf);
+            }
+            size_t rem = f.read(buf, sizeof(buf));
+            bytesRead += rem;
+            f.close();
+        }
+
+        bool readMatch = (bytesRead == sz);
+        Serial.printf("/js/api.js : exists=YES, size=%u, readable=%u, match=%s\n",
+            sz, bytesRead, readMatch ? "YES" : "MISMATCH!");
+    } else {
+        Serial.printf("/js/api.js : MISSING\n");
+    }
+
+    // Diagnostic: Test actual file serving path for problematic files
+    Serial.println("\n=== File Serve Path Test ===");
+    const char* serveTestFiles[] = {
+        "/js/api.js",
+        "/js/components/map.js",
+        "/js/components/gauge.js",
+        "/js/components/timeline.js",
+        "/js/components/zone-editor.js"
+    };
+    for (const auto* path : serveTestFiles) {
+        if (LittleFS.exists(path)) {
+            File f = LittleFS.open(path, "r");
+            if (f) {
+                size_t sz = f.size();
+                const char* ct = getContentType(path).c_str();
+
+                // Simulate exact handleFileRead streaming
+                server.sendHeader("Content-Length", String(sz));
+                // Note: We don't actually send, just test the streaming logic
+                uint8_t testBuf[1024];
+                size_t testTotal = 0;
+                while (f.read(testBuf, sizeof(testBuf)) > 0) {
+                    testTotal += sizeof(testBuf);
+                }
+                size_t rem = f.read(testBuf, sizeof(testBuf));
+                testTotal += rem;
+                f.close();
+
+                Serial.printf("Serve test %s: size=%u, streamed=%u, match=%s\n",
+                    path, sz, testTotal, (testTotal == sz) ? "YES" : "MISMATCH!");
+            } else {
+                Serial.printf("Serve test %s: FAILED TO OPEN\n", path);
+            }
+        } else {
+            Serial.printf("Serve test %s: NOT FOUND\n", path);
+        }
+    }
 
     // Initialize WebSocket server for real-time telemetry - DISABLED for stability
     // initWebSocket();

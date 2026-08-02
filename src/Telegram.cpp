@@ -34,12 +34,21 @@ static unsigned long lastTelegramRetry = 0;
 
 bool telegramConfigured() {
     if (!telegramConfigLoaded) {
+        Serial.println("[Telegram] Loading config from LittleFS...");
         telegramConfigLoaded = loadTelegramConfig(telegramConfig);
+        Serial.printf("[Telegram] Config loaded: %s, enabled=%s, token_len=%d, chatId_len=%d\n",
+                      telegramConfigLoaded ? "YES" : "NO",
+                      telegramConfig.enabled ? "YES" : "NO",
+                      telegramConfig.botToken.length(),
+                      telegramConfig.chatId.length());
     }
-    return telegramConfig.enabled && telegramConfig.botToken.length() > 0 && telegramConfig.chatId.length() > 0;
+    bool configured = telegramConfig.enabled && telegramConfig.botToken.length() > 0 && telegramConfig.chatId.length() > 0;
+    Serial.printf("[Telegram] telegramConfigured() = %s\n", configured ? "YES" : "NO");
+    return configured;
 }
 
 void reloadTelegramConfig() {
+    Serial.println("[Telegram] Reloading config...");
     telegramConfigLoaded = false;
     telegramConfigured();  // Will reload
 }
@@ -107,10 +116,13 @@ static void processTelegramQueue() {
 
 void initialiseTelegram()
 {
+    Serial.println("[Telegram] Initialising...");
     if (telegramConfigured()) {
-        Serial.println("Telegram configured and ready");
+        Serial.println("[Telegram] Configured and ready");
+        Serial.printf("[Telegram] Bot Token: %s...\n", telegramConfig.botToken.substring(0, 10).c_str());
+        Serial.printf("[Telegram] Chat ID: %s\n", telegramConfig.chatId.c_str());
     } else {
-        Serial.println("Telegram not configured - run setup via web dashboard");
+        Serial.println("[Telegram] Not configured - run setup via web dashboard");
     }
 }
 
@@ -119,17 +131,21 @@ void initialiseTelegram()
 bool sendTelegramMessage(const String& message)
 {
     if (!wifiConnected()) {
-        LOG_WARN(LogModule::TELE, "WiFi unavailable, queueing message");
+        LOG_WARN(LogModule::TELE, "WiFi STA not connected, queueing message");
         return enqueueTelegramMessage(message, false);
     }
 
     if (!telegramConfigured()) {
-        LOG_WARN(LogModule::TELE, "Telegram not configured");
+        LOG_WARN(LogModule::TELE, "Telegram not configured (token/ChatID missing or disabled)");
         return false;
     }
 
     // Check internet connectivity before attempting HTTPS
-    if (!checkInternetConnectivity()) {
+    Serial.println("[Telegram] Checking internet connectivity...");
+    bool internet = checkInternetConnectivity();
+    Serial.printf("[Telegram] Internet connectivity: %s\n", internet ? "YES" : "NO");
+
+    if (!internet) {
         LOG_WARN(LogModule::TELE, "No internet connectivity, queueing message");
         return enqueueTelegramMessage(message, false);
     }
@@ -149,15 +165,18 @@ bool sendTelegramMessage(const String& message)
     https.addHeader("Content-Type", "application/x-www-form-urlencoded");
 
     String body = "chat_id=" + telegramConfig.chatId + "&text=" + urlEncode(message) + "&parse_mode=Markdown";
+
+    Serial.printf("[Telegram] Sending message to chat_id: %s\n", telegramConfig.chatId.c_str());
     int response = https.POST(body);
+    String responseBody = https.getString();
     https.end();
 
     if (response == 200) {
-        LOG_INFO(LogModule::TELE, "Telegram sent successfully");
+        LOG_INFO(LogModule::TELE, "Telegram sent successfully (HTTP 200)");
         return true;
     }
 
-    LOG_ERROR(LogModule::TELE, "Telegram error: %d", response);
+    LOG_ERROR(LogModule::TELE, "Telegram error: HTTP %d, Response: %s", response, responseBody.c_str());
     return false;
 }
 

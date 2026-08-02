@@ -20,7 +20,7 @@ static unsigned long stateStartTime = 0;
 
 static bool apModeActive = false;
 
-static bool backgroundScanEnabled = true;
+static bool backgroundScanEnabled = false;  // Disabled by default to prevent AP disruption in AP+STA mode
 static unsigned long lastBackgroundScan = 0;
 static int lastScanResultCount = 0;
 static String scannedSSIDs[20];
@@ -64,7 +64,7 @@ bool connectToBestNetwork() {
             currentNetworkIndex = i;
             Serial.print("Connecting to: ");
             Serial.println(savedNetworks[i].ssid);
-            
+
             WiFi.begin(savedNetworks[i].ssid.c_str(), savedNetworks[i].password.c_str());
             return true;
         }
@@ -200,7 +200,7 @@ void serviceWiFi() {
 
             if (currentNetworkIndex >= 0 && currentNetworkIndex < savedNetworkCount) {
                 WiFi.begin(savedNetworks[currentNetworkIndex].ssid.c_str(),
-                          savedNetworks[currentNetworkIndex].password.c_str());
+                           savedNetworks[currentNetworkIndex].password.c_str());
                 setState(WIFI_STATE_CONNECTING);
             } else if (!connectToBestNetwork()) {
                 // Stay in AP mode - AP is always active
@@ -265,37 +265,37 @@ void serviceWiFi() {
 
 bool startAPMode(const char* apSSID, const char* apPass) {
     if (apModeActive) return true;
-    
+
     Serial.println();
     Serial.println("Starting AP Mode...");
     Serial.print("SSID: "); Serial.println(apSSID);
     Serial.print("IP: 192.168.4.1");
-    
+
     WiFi.mode(WIFI_AP_STA);
     WiFi.softAPdisconnect(true);
     delay(100);
-    
+
     WiFi.softAPConfig(AP_IP, AP_GATEWAY, AP_SUBNET);
     bool result = WiFi.softAP(apSSID, apPass);
-    
+
     if (result) {
         apModeActive = true;
         setState(WIFI_STATE_AP_FALLBACK);
-        
+
         Serial.println();
         Serial.println("AP Mode Active");
         Serial.print("AP IP: "); Serial.println(WiFi.softAPIP());
-        
+
         extern void initWebDashboard();
         initWebDashboard();
     }
-    
+
     return result;
 }
 
 void stopAPMode() {
     if (!apModeActive) return;
-    
+
     Serial.println("Stopping AP Mode...");
     WiFi.softAPdisconnect(true);
     WiFi.mode(WIFI_STA);
@@ -321,8 +321,10 @@ bool isBackgroundScanEnabled() {
 }
 
 void triggerBackgroundScan() {
-    if (currentState == WIFI_STATE_CONNECTING || currentState == WIFI_STATE_RECONNECTING) return;
-    
+    if (currentState == WIFI_STATE_CONNECTING ||
+        currentState == WIFI_STATE_RECONNECTING ||
+        currentState == WIFI_STATE_AP_FALLBACK) return;
+
     Serial.println("Starting background WiFi scan...");
     WiFi.scanNetworks(true);
     setState(WIFI_STATE_SCANNING);
@@ -352,7 +354,8 @@ bool getScannedNetworkSecure(int index) {
 //----------------------------------------------------
 
 bool wifiConnected() {
-    return WiFi.status() == WL_CONNECTED && !apModeActive;
+    // In AP+STA mode, check if STA interface is connected regardless of AP being active
+    return WiFi.status() == WL_CONNECTED;
 }
 
 bool wifiIsAPMode() {
@@ -414,20 +417,20 @@ void printWiFiStatus() {
     Serial.println("WiFi STATUS");
     Serial.print("State: "); Serial.println(getWiFiStateString());
     Serial.print("Uptime in state: "); Serial.print(getUptimeInCurrentState() / 1000); Serial.println("s");
-    
+
     if (apModeActive) {
         Serial.println("Mode: AP Fallback");
         Serial.print("AP SSID: "); Serial.println(AP_MODE_SSID);
         Serial.print("AP IP: "); Serial.println(WiFi.softAPIP());
         return;
     }
-    
+
     if (!wifiConnected()) {
         Serial.println("Status: DISCONNECTED");
         Serial.print("Saved networks: "); Serial.println(savedNetworkCount);
         return;
     }
-    
+
     Serial.println("Status: CONNECTED");
     Serial.print("SSID: "); Serial.println(getSSID());
     Serial.print("IP: "); Serial.println(getIPAddress());
@@ -442,14 +445,15 @@ void printWiFiStatus() {
 
 bool checkInternetConnectivity() {
     if (!wifiConnected()) return false;
-    
+
     WiFiClient client;
     HTTPClient http;
     http.begin(client, "http://clients3.google.com/generate_204");
     http.setTimeout(5000);
     int httpCode = http.GET();
     http.end();
-    
+
+    Serial.printf("[WiFi] Internet connectivity check: HTTP %d\n", httpCode);
     return httpCode == 204;
 }
 

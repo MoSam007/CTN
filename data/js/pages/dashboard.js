@@ -20,6 +20,100 @@ export async function initDashboardPage() {
     await renderDashboard();
     setupEventListeners();
     subscribeToState();
+
+    // Fetch initial device status from API (WebSocket is disabled in firmware)
+    fetchInitialStatus();
+}
+
+async function fetchInitialStatus() {
+    try {
+        const response = await fetch('/api/status');
+        if (response.ok) {
+            const data = await response.json();
+            updateStateFromStatus(data);
+        }
+    } catch (e) {
+        console.error('Failed to fetch initial status:', e);
+    }
+}
+
+function updateStateFromStatus(data) {
+    // Update battery
+    if (data.battery) {
+        State.battery.value = { ...State.battery.value, ...data.battery };
+    }
+
+    // Update GPS
+    if (data.gps) {
+        State.gps.value = { ...State.gps.value, ...data.gps };
+    }
+
+    // Update WiFi
+    if (data.wifi) {
+        State.wifi.value = { ...State.wifi.value, ...data.wifi };
+    }
+
+    // Update Device/Firmware
+    if (data.firmwareVersion || data.deviceName || data.uptime || data.freeHeap) {
+        State.device.value = {
+            ...State.device.value,
+            firmware: data.firmwareVersion,
+            name: data.deviceName,
+            uptime: data.uptime,
+            freeHeap: data.freeHeap,
+            chipId: data.flashChipSize ? parseInt(data.flashChipSize) : 0,
+            resetReason: data.resetReason
+        };
+    }
+
+    // Update Behaviour
+    if (data.behaviour) {
+        State.behaviour.value = {
+            ...State.behaviour.value,
+            riskScore: data.behaviour.riskScore ?? State.behaviour.value.riskScore,
+            state: data.behaviour.stateStr ?? State.behaviour.value.state,
+            anomalyCount: 0
+        };
+    }
+
+    // Update Telegram
+    if (data.telegram) {
+        State.telegram.value = {
+            ...State.telegram.value,
+            configured: data.telegram.configured,
+            enabled: data.telegram.enabled
+        };
+    }
+
+    // Update demo mode
+    if (data.demoMode !== undefined) {
+        State.demoMode.value = data.demoMode;
+    }
+
+    // Update device status badge in header
+    updateDeviceStatusBadge(data);
+}
+
+function updateDeviceStatusBadge(data) {
+    const badge = document.getElementById('device-status');
+    if (!badge) return;
+
+    const wifi = data.wifi;
+    let text, className;
+
+    if (wifi?.connected) {
+        text = 'Connected';
+        className = 'status-connected';
+    } else if (wifi?.mode === 'AP' || wifi?.apMode) {
+        text = 'AP Mode';
+        className = 'status-ap';
+    } else {
+        text = 'Disconnected';
+        className = 'status-disconnected';
+    }
+
+    badge.textContent = text;
+    badge.className = `status-badge ${className}`;
 }
 
 function getDashboardHTML() {
