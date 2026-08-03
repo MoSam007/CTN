@@ -76,15 +76,21 @@ String getArg(const String& name, JsonDocument* jsonDoc) {
     if (server.hasArg(name)) {
         return server.arg(name);
     }
-    if (jsonDoc && (*jsonDoc).containsKey(name) && (*jsonDoc)[name].is<String>()) {
-        return (*jsonDoc)[name].as<String>();
+    if (jsonDoc && (*jsonDoc).is<JsonObject>()) {
+        JsonVariant value = (*jsonDoc)[name];
+        if (!value.isNull() && value.is<String>()) {
+            return value.as<String>();
+        }
     }
     return String();
 }
 
 bool hasArg(const String& name, JsonDocument* jsonDoc) {
     if (server.hasArg(name)) return true;
-    if (jsonDoc && (*jsonDoc).containsKey(name)) return true;
+    if (jsonDoc && (*jsonDoc).is<JsonObject>()) {
+        JsonVariant value = (*jsonDoc)[name];
+        return !value.isNull();
+    }
     return false;
 }
 
@@ -1140,7 +1146,7 @@ void handleAPIConfigImport() {
         cal.adcReference = doc["batteryCalibration"]["adcReference"] | 1.0;
         cal.calibrated = doc["batteryCalibration"]["calibrated"] | false;
         JsonArray vp = doc["batteryCalibration"]["voltagePoints"].as<JsonArray>();
-        for (int i = 0; i < 11 && i < vp.size(); i++) {
+        for (size_t i = 0; i < 11U && i < vp.size(); i++) {
             cal.voltagePoints[i] = vp[i] | 0.0;
         }
         saveBatteryCalibration(cal);
@@ -1281,7 +1287,6 @@ void handleAPIDemoSimulatorPost() {
 
     float drainRate = doc["drainRate"] | 1.0;
     bool charging = doc["charging"] | false;
-    int gpsNoise = doc["gpsNoise"] | 0;
 
     #if CTN_BATTERY_SIMULATOR
     batterySimulatorSetDrainRate(drainRate);
@@ -1637,8 +1642,6 @@ void initWebDashboard() {
             File f = LittleFS.open(path, "r");
             if (f) {
                 size_t sz = f.size();
-                const char* ct = getContentType(path).c_str();
-
                 // Simulate exact handleFileRead streaming
                 server.sendHeader("Content-Length", String(sz));
                 // Note: We don't actually send, just test the streaming logic
