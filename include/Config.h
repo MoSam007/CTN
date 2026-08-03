@@ -6,8 +6,13 @@
 /*************************************************
  * Firmware Information
  *************************************************/
+#ifndef DEVICE_NAME
 #define DEVICE_NAME        "CTN-001"
+#endif
+
+#ifndef FW_VERSION
 #define FW_VERSION         "1.0"
+#endif
 
 /*
  * Pin Definitions

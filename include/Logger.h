@@ -51,6 +51,7 @@ LogLevel getLogLevel();
 // Core Logging Functions
 //----------------------------------------------------
 void logMessage(LogLevel level, const char* module, const char* format, ...);
+void logMessageVA(LogLevel level, const char* module, const char* format, va_list args);
 void logError(const char* module, const char* format, ...);
 void logWarn(const char* module, const char* format, ...);
 void logInfo(const char* module, const char* format, ...);

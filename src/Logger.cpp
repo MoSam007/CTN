@@ -196,9 +196,15 @@ void logMessage(LogLevel level, const char* module, const char* format, ...) {
 
     va_list args;
     va_start(args, format);
-    String message = formatMessage(level, module, format, args);
+    logMessageVA(level, module, format, args);
     va_end(args);
+}
 
+void logMessageVA(LogLevel level, const char* module, const char* format, va_list args) {
+    if (!g_loggerInitialized) return;
+    if (level > g_loggerConfig.serialLevel && level > g_loggerConfig.fileLevel) return;
+
+    String message = formatMessage(level, module, format, args);
     writeToSerial(level, message);
     writeToFile(level, message);
 }
@@ -206,35 +212,35 @@ void logMessage(LogLevel level, const char* module, const char* format, ...) {
 void logError(const char* module, const char* format, ...) {
     va_list args;
     va_start(args, format);
-    logMessage(LOG_LEVEL_ERROR, module, format, args);
+    logMessageVA(LOG_LEVEL_ERROR, module, format, args);
     va_end(args);
 }
 
 void logWarn(const char* module, const char* format, ...) {
     va_list args;
     va_start(args, format);
-    logMessage(LOG_LEVEL_WARN, module, format, args);
+    logMessageVA(LOG_LEVEL_WARN, module, format, args);
     va_end(args);
 }
 
 void logInfo(const char* module, const char* format, ...) {
     va_list args;
     va_start(args, format);
-    logMessage(LOG_LEVEL_INFO, module, format, args);
+    logMessageVA(LOG_LEVEL_INFO, module, format, args);
     va_end(args);
 }
 
 void logDebug(const char* module, const char* format, ...) {
     va_list args;
     va_start(args, format);
-    logMessage(LOG_LEVEL_DEBUG, module, format, args);
+    logMessageVA(LOG_LEVEL_DEBUG, module, format, args);
     va_end(args);
 }
 
 void logVerbose(const char* module, const char* format, ...) {
     va_list args;
     va_start(args, format);
-    logMessage(LOG_LEVEL_VERBOSE, module, format, args);
+    logMessageVA(LOG_LEVEL_VERBOSE, module, format, args);
     va_end(args);
 }
 

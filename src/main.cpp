@@ -21,6 +21,8 @@
 #include "Alerts.h"
 #include "WebDashboard.h"
 #include "WebSocket.h"
+#include "Logger.h"
+#include "OTA.h"
 
 //--------------------------------------------------------------
 // Timers
@@ -135,6 +137,8 @@ void setup()
     Serial.println(" Production Firmware v" FW_VERSION);
     Serial.println("====================================");
 
+    initialiseLogger();
+
     pinMode(PANIC_BUTTON_PIN, INPUT_PULLUP);
 
     // Initialize Storage (LittleFS) first - critical for all configs
@@ -160,6 +164,7 @@ void setup()
     initialiseTelegram();
     initialiseBehaviour();
     initialiseAlerts();
+    initialiseOTA();
 
     Serial.println();
     Serial.println("System Initialisation Complete.");
@@ -192,6 +197,7 @@ void loop()
 
     // Retry queued Telegram messages
     retryQueuedTelegramMessages();
+    serviceOTA();
 
     if (millis() - statusTimer >= 10000)
     {
